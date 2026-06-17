@@ -1,0 +1,49 @@
+school: 장평중학교
+year: 2026
+sent_date: "2026-05-15"       # 발송 예정일 (스승의 날)
+actual_date: "2026-06-15"     # 실제 도착일
+
+firebase:
+  api_key: "AIzaSyCPWlsyWigSQcI09jPxSnlR6WG3gaYSzpY"
+  auth_domain: "teachers-day-20260616.firebaseapp.com"
+  project_id: "teachers-day-20260616"
+  storage_bucket: "teachers-day-20260616.firebasestorage.app"
+  messaging_sender_id: "916421233914"
+  app_id: "1:916421233914:web:303c846523966b3a2c8d43"
+
+classes:
+  "1-1":
+    teacher: "이서영"
+    subject: "국어"
+    acrostic_chars: ["이", "서", "영"]
+  "1-2":
+    teacher: "김상은"
+    subject: "음악"
+    acrostic_chars: ["김", "상", "은"]
+  "1-3":
+    teacher: "명소현"
+    subject: "과학"
+    acrostic_chars: ["명", "소", "현"]
+  "1-4":
+    teacher: ""
+    subject: ""
+    acrostic_chars: []
+  "1-5":
+    teacher: "강예진"
+    subject: "과학"
+    acrostic_chars: ["강", "예", "진"]
+  "1-6":
+    teacher: "박수연"
+    subject: "국어"
+    acrostic_chars: ["박", "수", "연"]
+  "1-7":
+    teacher: "박경태"
+    subject: "체육"
+    acrostic_chars: ["박", "경", "태"]
+  "1-8":
+    teacher: "최윤정"
+    subject: "수학"
+    acrostic_chars: ["최", "윤", "정"]
+    rotation_overrides:
+      "김예준 10805": -180   # 갤러리 5번: 우측 180도
+      "오시훈 10814": 180    # 갤러리 6번: 좌측 180도

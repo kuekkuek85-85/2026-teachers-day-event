@@ -1,0 +1,20 @@
+.env
+
+# 학생 개인정보 (실명·학번·편지 원문) — 공개 저장소 제외
+/data/
+/images/
+/analysis/
+
+# 대용량 정적 빌드 산출물 (애니메이션 사이트에 미사용)
+docs/*_card_news.html
+
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+Thumbs.db
+venv/
+.venv/
+*.egg-info/
+dist/
+build/

@@ -1,0 +1,1790 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📦 배송 지연 에디션 — {{ class_id }}반 마음 소포 | {{ teacher_name }} 선생님께</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+
+  {% if font_base64 %}
+  @font-face {
+    font-family: 'TDTDGangGulim';
+    src: url('data:font/woff2;base64,{{ font_base64 }}') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+  }
+  {% endif %}
+
+  :root {
+    --pink-light: #FFB3D1;
+    --pink-main: #FF6B9D;
+    --pink-deep: #C2185B;
+    --purple: #7B1FA2;
+    --orange: #FF6B35;
+    --white: #FFFFFF;
+    --card-radius: 32px;
+    --font-main: {% if font_base64 %}'TDTDGangGulim', {% endif %}'Noto Sans KR', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: #1a1a2e;
+    font-family: var(--font-main);
+    overflow: hidden;
+  }
+
+  /* ── 슬라이드 컨테이너 ── */
+  #slideshow {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slide-wrapper {
+    position: relative;
+    /* 16:9 비율, 뷰포트 맞춤 */
+    width: min(100vw, 177.78vh);
+    height: min(56.25vw, 100vh);
+  }
+
+  .slide {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--pink-light) 0%, var(--pink-main) 100%);
+    overflow: hidden;
+    border-radius: 12px;
+  }
+
+  .slide.active { display: flex; flex-direction: column; }
+
+  /* ── 공통 배경 버블 ── */
+  .bubble {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    pointer-events: none;
+  }
+
+  /* ── 내비게이션 ── */
+  #nav {
+    position: fixed;
+    bottom: max(1vh, 5px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: clamp(4px, 0.6vw, 8px);
+    background: rgba(0,0,0,0.22);
+    padding: clamp(3px, 0.5vh, 6px) clamp(8px, 1.2vw, 16px);
+    border-radius: 999px;
+    z-index: 100;
+    backdrop-filter: blur(6px);
+    opacity: 0.6;
+    transition: opacity 0.25s;
+  }
+
+  #nav:hover { opacity: 1; }
+
+  #nav button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: clamp(13px, 1.6vw, 22px);
+    cursor: pointer;
+    line-height: 1;
+    padding: 1px 4px;
+    border-radius: 5px;
+    transition: background 0.15s;
+  }
+
+  #nav button:hover { background: rgba(255,255,255,0.18); }
+  #nav button:disabled { opacity: 0.25; cursor: default; }
+
+  #slide-counter {
+    color: rgba(255,255,255,0.8);
+    font-size: clamp(9px, 0.85vw, 12px);
+    min-width: 3em;
+    text-align: center;
+    font-family: var(--font-main);
+  }
+
+  .dot-nav {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .dot {
+    width: clamp(4px, 0.55vw, 7px);
+    height: clamp(4px, 0.55vw, 7px);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .dot.active {
+    background: rgba(255,255,255,0.9);
+    transform: scale(1.3);
+  }
+
+  /* ── 슬라이드 공통 레이아웃 ── */
+  .slide-header {
+    padding: clamp(10px, 1.8vh, 20px) clamp(16px, 2.5vw, 36px) clamp(6px, 1vh, 12px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .slide-tag {
+    background: var(--orange);
+    color: white;
+    font-size: clamp(9px, 1vw, 13px);
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.03em;
+  }
+
+  .slide-title {
+    font-size: clamp(18px, 3vw, 44px);
+    font-weight: 900;
+    color: var(--pink-deep);
+    text-shadow: 0 2px 8px rgba(194,24,91,0.18);
+    line-height: 1.2;
+  }
+
+  .slide-subtitle {
+    font-size: clamp(11px, 1.4vw, 20px);
+    color: var(--purple);
+    font-weight: 500;
+    margin-top: 0.3em;
+  }
+
+  .slide-body {
+    flex: 1;
+    padding: clamp(8px, 1.2vh, 16px) clamp(16px, 2.5vw, 36px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* ── 흰 카드 ── */
+  .card {
+    background: var(--white);
+    border-radius: var(--card-radius);
+    box-shadow: 0 8px 32px rgba(194,24,91,0.13);
+    padding: clamp(12px, 2vh, 28px) clamp(14px, 2.2vw, 32px);
+  }
+
+  /* ══════════════════════════════════════════
+     슬라이드 0: 커버
+  ══════════════════════════════════════════ */
+  #slide-0 {
+    background: linear-gradient(135deg, #FFB3D1 0%, #FF6B9D 60%, #C2185B 100%);
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0;
+  }
+
+  .cover-badge {
+    background: var(--orange);
+    color: white;
+    font-size: clamp(10px, 1.1vw, 15px);
+    font-weight: 700;
+    padding: clamp(4px, 0.6vh, 8px) clamp(12px, 1.8vw, 22px);
+    border-radius: 999px;
+    margin-bottom: clamp(10px, 1.5vh, 20px);
+    display: inline-block;
+    letter-spacing: 0.04em;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+  }
+
+  .cover-class {
+    font-size: clamp(13px, 1.6vw, 22px);
+    color: rgba(255,255,255,0.85);
+    font-weight: 500;
+    margin-bottom: clamp(6px, 0.8vh, 10px);
+  }
+
+  .cover-title {
+    font-size: clamp(28px, 5.5vw, 80px);
+    font-weight: 900;
+    color: white;
+    line-height: 1.15;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    margin-bottom: clamp(8px, 1vh, 14px);
+  }
+
+  .cover-teacher {
+    font-size: clamp(16px, 2.2vw, 32px);
+    color: rgba(255,255,255,0.9);
+    font-weight: 700;
+    margin-bottom: clamp(10px, 1.5vh, 18px);
+  }
+
+  .cover-delay {
+    background: rgba(255,255,255,0.22);
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 16px;
+    padding: clamp(8px, 1.2vh, 14px) clamp(16px, 2.5vw, 30px);
+    display: inline-block;
+  }
+
+  .cover-delay p {
+    font-size: clamp(9px, 1vw, 14px);
+    color: rgba(255,255,255,0.9);
+    line-height: 1.7;
+  }
+
+  .cover-emoji {
+    font-size: clamp(40px, 7vw, 96px);
+    margin-bottom: clamp(6px, 1vh, 12px);
+    display: block;
+  }
+
+  /* ══════════════════════════════════════════
+     슬라이드 1: 프롤로그
+  ══════════════════════════════════════════ */
+
+  /* slide-body를 column flex로 채우기 */
+  #slide-1 .slide-body {
+    justify-content: flex-start;
+    gap: clamp(8px, 1.2vh, 14px);
+  }
+
+  .prologue-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(8px, 1.2vw, 18px);
+    flex: 1;           /* 남은 공간 모두 차지 */
+    min-height: 0;     /* flex 자식 overflow 방지 */
+  }
+
+  .prologue-item {
+    background: white;
+    border-radius: 20px;
+    padding: clamp(14px, 2.2vh, 32px) clamp(12px, 1.5vw, 22px);
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(194,24,91,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(6px, 1vh, 12px);
+  }
+
+  .prologue-icon {
+    font-size: clamp(32px, 5vw, 64px);
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .prologue-item h3 {
+    font-size: clamp(13px, 1.5vw, 20px);
+    color: var(--pink-deep);
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .prologue-item p {
+    font-size: clamp(10px, 1.05vw, 14px);
+    color: #555;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .delay-notice {
+    background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+    border-left: 4px solid var(--orange);
+    border-radius: 12px;
+    padding: clamp(10px, 1.4vh, 16px) clamp(14px, 1.8vw, 22px);
+    font-size: clamp(10px, 1.1vw, 15px);
+    color: #6D4C00;
+    font-weight: 500;
+    line-height: 1.6;
+    flex-shrink: 0;
+  }
+
+  /* ══════════════════════════════════════════
+     슬라이드 2: 삼행시
+  ══════════════════════════════════════════ */
+  .acrostic-container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: clamp(10px, 1.5vw, 20px);
+    height: 100%;
+  }
+
+  .acrostic-list {
+    background: white;
+    border-radius: 24px;
+    padding: clamp(10px, 1.5vh, 18px);
+    overflow-y: auto;
+    box-shadow: 0 4px 16px rgba(194,24,91,0.1);
+  }
+
+  .acrostic-list::-webkit-scrollbar { width: 4px; }
+  .acrostic-list::-webkit-scrollbar-thumb { background: var(--pink-main); border-radius: 2px; }
+
+  .acrostic-item {
+    padding: clamp(6px, 0.8vh, 10px) 0;
+    border-bottom: 1px solid #FFE4EF;
+  }
+
+  .acrostic-item:last-child { border-bottom: none; }
+
+  .acrostic-name {
+    font-size: clamp(9px, 0.9vw, 12px);
+    color: var(--purple);
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .acrostic-lines {
+    font-size: clamp(9px, 0.9vw, 12px);
+    color: #333;
+    line-height: 1.5;
+  }
+
+  .acrostic-char {
+    color: var(--pink-deep);
+    font-weight: 900;
+    font-size: 1.1em;
+  }
+
+  .story-box {
+    background: white;
+    border-radius: 24px;
+    padding: clamp(12px, 1.8vh, 22px) clamp(14px, 2vw, 24px);
+    box-shadow: 0 4px 16px rgba(194,24,91,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.2vh, 14px);
+  }
+
+  .story-label {
+    font-size: clamp(11px, 1.2vw, 15px);
+    color: var(--orange);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+  }
+
+  .story-text {
+    font-size: clamp(15px, 2vw, 26px);
+    color: #333;
+    line-height: 2.0;
+    flex: 1;
+    overflow-y: auto;
+    word-break: keep-all;
+    word-wrap: break-word;
+  }
+
+  /* ══════════════════════════════════════════
+     슬라이드 3: 감정 워드클라우드
+  ══════════════════════════════════════════ */
+  .wordcloud-wrap {
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 4px 16px rgba(194,24,91,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    overflow: hidden;
+    padding: clamp(8px, 1.2vh, 16px);
+  }
+
+  .wordcloud-wrap svg {
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  /* ══════════════════════════════════════════
+     슬라이드 4: 특별한 능력 (1)
+  ══════════════════════════════════════════ */
+  .ability-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: clamp(8px, 1.2vw, 16px);
+    flex: 1;
+    min-height: 0;
+  }
+
+  .ability-card {
+    background: white;
+    border-radius: 22px;
+    padding: clamp(10px, 1.5vh, 18px) clamp(12px, 1.5vw, 20px);
+    box-shadow: 0 4px 16px rgba(194,24,91,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.7vh, 8px);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* 카드 배경 장식 숫자 */
+  .ability-card::before {
+    content: attr(data-num);
+    position: absolute;
+    right: 10px;
+    bottom: -8px;
+    font-size: clamp(60px, 8vw, 110px);
+    font-weight: 900;
+    color: var(--pink-light);
+    opacity: 0.25;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .ability-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .ability-icon { font-size: clamp(22px, 2.8vw, 36px); }
+
+  .ability-title {
+    font-size: clamp(14px, 1.6vw, 22px);
+    font-weight: 900;
+    color: var(--pink-deep);
+  }
+
+  /* 키워드를 한 줄씩 바(bar) 형태로 */
+  .keyword-list {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(4px, 0.55vh, 7px);
+    flex: 1;
+    justify-content: space-evenly;
+    min-height: 0;
+  }
+
+  .keyword-chip {
+    background: linear-gradient(90deg, #FFE4EF 0%, #FFF0F6 100%);
+    color: var(--pink-deep);
+    font-size: clamp(11px, 1.2vw, 16px);
+    font-weight: 700;
+    padding: clamp(5px, 0.7vh, 9px) clamp(10px, 1.2vw, 16px);
+    border-radius: 12px;
+    border-left: 4px solid var(--pink-main);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .keyword-chip::before {
+    content: '✦';
+    color: var(--pink-main);
+    font-size: 0.75em;
+    flex-shrink: 0;
+  }
+
+  /* ══════════════════════════════════════════
+     슬라이드 5: 특별한 능력 (2)
+  ══════════════════════════════════════════ */
+  .influence-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(8px, 1.2vw, 16px);
+    flex: 1;
+  }
+
+  .influence-item {
+    background: white;
+    border-radius: 20px;
+    padding: clamp(10px, 1.5vh, 18px) clamp(12px, 1.5vw, 20px);
+    box-shadow: 0 4px 16px rgba(194,24,91,0.1);
+  }
+
+  .influence-num {
+    font-size: clamp(28px, 4vw, 54px);
+    font-weight: 900;
+    color: var(--pink-light);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .influence-title {
+    font-size: clamp(12px, 1.4vw, 18px);
+    font-weight: 700;
+    color: var(--pink-deep);
+    margin-bottom: 4px;
+  }
+
+  .influence-desc {
+    font-size: clamp(9px, 0.95vw, 13px);
+    color: #555;
+    line-height: 1.55;
+  }
+
+  .quote-box {
+    background: linear-gradient(135deg, var(--pink-deep), var(--purple));
+    border-radius: 16px;
+    padding: clamp(8px, 1.2vh, 14px) clamp(12px, 1.8vw, 20px);
+    color: white;
+    font-size: clamp(10px, 1.1vw, 15px);
+    font-style: italic;
+    line-height: 1.6;
+    margin-top: clamp(6px, 0.8vh, 10px);
+    position: relative;
+  }
+
+  .quote-box::before {
+    content: '"';
+    font-size: 3em;
+    position: absolute;
+    top: -0.2em;
+    left: 0.3em;
+    opacity: 0.3;
+    font-family: Georgia, serif;
+  }
+
+  /* ══════════════════════════════════════════
+     슬라이드 6: 마인드맵
+  ══════════════════════════════════════════ */
+  .mindmap-wrap {
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 4px 16px rgba(194,24,91,0.1);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: clamp(8px, 1.2vh, 16px);
+  }
+
+  .mindmap-wrap svg {
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  /* ══════════════════════════════════════════
+     슬라이드 7: 그림 분석
+  ══════════════════════════════════════════ */
+  .drawing-analysis {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(8px, 1.2vw, 14px);
+    flex: 1;
+  }
+
+  .analysis-bullet {
+    background: white;
+    border-radius: 18px;
+    padding: clamp(10px, 1.5vh, 16px) clamp(10px, 1.2vw, 16px);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(194,24,91,0.1);
+  }
+
+  .analysis-bullet-num {
+    background: linear-gradient(135deg, var(--pink-main), var(--pink-deep));
+    color: white;
+    font-size: clamp(10px, 1.1vw, 14px);
+    font-weight: 700;
+    min-width: clamp(20px, 2.2vw, 28px);
+    height: clamp(20px, 2.2vw, 28px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .analysis-bullet-text {
+    font-size: clamp(10px, 1.05vw, 14px);
+    color: #333;
+    line-height: 1.55;
+  }
+
+  /* ══════════════════════════════════════════
+     슬라이드 8,9: 갤러리
+  ══════════════════════════════════════════ */
+  .gallery-grid {
+    display: grid;
+    gap: clamp(6px, 0.9vw, 12px);
+    flex: 1;
+  }
+
+  .gallery-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .gallery-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .gallery-grid.cols-5 { grid-template-columns: repeat(5, 1fr); }
+
+  .gallery-item {
+    position: relative;    /* gallery-name 절대 위치 기준 */
+    background: #f8f8f8;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(194,24,91,0.1);
+    display: flex;
+    flex-direction: column;
+    aspect-ratio: 3 / 4;
+  }
+
+  .gallery-item img {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    object-fit: contain;
+    object-position: center center;
+    display: block;
+  }
+
+  .gallery-item .no-img {
+    font-size: clamp(10px, 1.1vw, 14px);
+    color: #aaa;
+    text-align: center;
+    padding: 12px;
+    line-height: 1.5;
+  }
+
+  .gallery-name {
+    position: absolute;    /* 항상 카드 하단에 표시 */
+    bottom: 0;
+    left: 0;
+    right: 0;
+    font-size: clamp(8px, 0.85vw, 12px);
+    color: var(--purple);
+    font-weight: 700;
+    padding: 4px 6px;
+    text-align: center;
+    background: rgba(255, 240, 247, 0.92);
+    backdrop-filter: blur(2px);
+  }
+
+  /* ══════════════════════════════════════════
+     슬라이드 10: 에필로그 (Firebase)
+  ══════════════════════════════════════════ */
+  .epilogue-wrap {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: clamp(10px, 1.5vw, 20px);
+    flex: 1;
+  }
+
+  .epilogue-message {
+    background: white;
+    border-radius: 24px;
+    padding: clamp(14px, 2vh, 24px) clamp(16px, 2.2vw, 28px);
+    box-shadow: 0 4px 16px rgba(194,24,91,0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(8px, 1vh, 14px);
+  }
+
+  .epilogue-delivered {
+    font-size: clamp(18px, 2.5vw, 36px);
+    font-weight: 900;
+    color: var(--pink-deep);
+  }
+
+  .epilogue-count {
+    font-size: clamp(11px, 1.2vw, 17px);
+    color: #555;
+    line-height: 1.65;
+  }
+
+  .epilogue-count strong { color: var(--pink-deep); }
+
+  .reply-section {
+    background: white;
+    border-radius: 24px;
+    padding: clamp(14px, 2vh, 22px) clamp(14px, 2vw, 22px);
+    box-shadow: 0 4px 16px rgba(194,24,91,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1vh, 12px);
+  }
+
+  #reply-display {
+    flex: 1;
+    background-color: #FFFAF9;
+    background-image:
+      repeating-linear-gradient(
+        transparent,
+        transparent calc(2em - 1px),
+        rgba(194, 24, 91, 0.18) calc(2em - 1px),
+        rgba(194, 24, 91, 0.18) 2em
+      );
+    border-radius: 14px;
+    border: 1px solid rgba(194,24,91,0.12);
+    padding: clamp(10px, 1.5vh, 14px) clamp(12px, 1.8vw, 20px) 0;
+    font-size: clamp(11px, 1.15vw, 15px);
+    color: #333;
+    line-height: 2;        /* 배경 줄(2em)과 정확히 일치 */
+    min-height: 80px;
+    font-style: normal;
+    overflow-y: auto;
+    white-space: pre-wrap;
+  }
+
+  #reply-display.empty { color: #bbb; font-style: italic; }
+
+  #login-area, #write-area {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  #login-area.hidden, #write-area.hidden { display: none; }
+
+  #user-info {
+    font-size: clamp(10px, 1.05vw, 14px);
+    color: var(--purple);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  #reply-textarea {
+    width: 100%;
+    border: 2px solid #FFB3D1;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-family: var(--font-main);
+    font-size: clamp(10px, 1.05vw, 14px);
+    resize: none;
+    outline: none;
+    color: #333;
+    line-height: 1.6;
+    flex: 1;
+    min-height: 80px;
+  }
+
+  #reply-textarea:focus { border-color: var(--pink-deep); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--pink-main), var(--pink-deep));
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: clamp(7px, 1vh, 11px) clamp(16px, 2vw, 24px);
+    font-family: var(--font-main);
+    font-size: clamp(10px, 1.05vw, 14px);
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    align-self: flex-end;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(194,24,91,0.35);
+  }
+
+  .btn-google {
+    background: white;
+    color: #333;
+    border: 2px solid #ddd;
+    border-radius: 999px;
+    padding: clamp(7px, 1vh, 11px) clamp(14px, 1.8vw, 20px);
+    font-family: var(--font-main);
+    font-size: clamp(10px, 1.05vw, 14px);
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: box-shadow 0.15s;
+    align-self: flex-start;
+  }
+
+  .btn-google:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.12); }
+
+  .btn-logout {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: clamp(9px, 0.9vw, 12px);
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  /* ══════════════════════════════════════════
+     슬라이드 11: 부록
+  ══════════════════════════════════════════ */
+  .appendix-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(10px, 1.5vw, 20px);
+    flex: 1;
+  }
+
+  .appendix-card {
+    background: white;
+    border-radius: 22px;
+    padding: clamp(12px, 1.8vh, 20px) clamp(14px, 2vw, 22px);
+    box-shadow: 0 4px 16px rgba(194,24,91,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .appendix-card h3 {
+    font-size: clamp(12px, 1.3vw, 18px);
+    color: var(--pink-deep);
+    font-weight: 700;
+  }
+
+  .appendix-card p, .appendix-card li {
+    font-size: clamp(9px, 0.95vw, 13px);
+    color: #555;
+    line-height: 1.65;
+  }
+
+  .appendix-card ul { padding-left: 1.2em; }
+  .appendix-card li { margin-bottom: 3px; }
+
+  .ccl-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #F3E5F5;
+    border: 1px solid var(--purple);
+    border-radius: 8px;
+    padding: 3px 10px;
+    font-size: clamp(9px, 0.9vw, 12px);
+    color: var(--purple);
+    font-weight: 600;
+    margin: 2px;
+  }
+
+  /* 키보드 힌트 */
+  #keyboard-hint {
+    position: fixed;
+    top: max(1vh, 6px);
+    right: max(1vw, 8px);
+    background: rgba(0,0,0,0.45);
+    color: rgba(255,255,255,0.6);
+    font-size: clamp(9px, 0.85vw, 12px);
+    padding: 4px 10px;
+    border-radius: 8px;
+    pointer-events: none;
+    backdrop-filter: blur(6px);
+    z-index: 99;
+  }
+
+  /* 선생님 이름 하이라이트 */
+  .teacher-hl {
+    background: linear-gradient(135deg, #FF6B9D, #C2185B);
+    color: white;
+    font-weight: 900;
+    padding: 1px 6px;
+    border-radius: 6px;
+    display: inline-block;
+    line-height: 1.4;
+  }
+
+  /* 삼행시 기준 글자 하이라이트 */
+  .acrostic-hl {
+    color: #FF4500;
+    font-weight: 900;
+    font-size: 1.1em;
+    text-shadow: 0 1px 4px rgba(255,69,0,0.3);
+  }
+
+  /* 말풍선 (8페이지 그림 분석) */
+  .speech-bubbles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(10px, 1.4vw, 18px);
+    flex: 1;
+    align-content: center;
+  }
+
+  .speech-bubble {
+    position: relative;
+    background: white;
+    border-radius: 20px;
+    padding: clamp(12px, 1.8vh, 20px) clamp(12px, 1.5vw, 18px);
+    box-shadow: 0 6px 20px rgba(194,24,91,0.13);
+    font-size: clamp(10px, 1.1vw, 15px);
+    color: #333;
+    line-height: 1.65;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: clamp(16px, 2vw, 28px);
+    border: 12px solid transparent;
+    border-top-color: white;
+    border-bottom: 0;
+  }
+
+  .speech-bubble-num {
+    background: linear-gradient(135deg, var(--pink-main), var(--pink-deep));
+    color: white;
+    font-size: clamp(11px, 1.1vw, 14px);
+    font-weight: 700;
+    min-width: clamp(22px, 2.2vw, 28px);
+    height: clamp(22px, 2.2vw, 28px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* 라이트박스 */
+  #lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+  }
+
+  #lightbox.open { display: flex; }
+
+  #lightbox img {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 8px 48px rgba(0,0,0,0.6);
+  }
+
+  #lightbox-close {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    color: white;
+    font-size: 32px;
+    cursor: pointer;
+    line-height: 1;
+    background: none;
+    border: none;
+    opacity: 0.8;
+  }
+
+  .gallery-item {
+    cursor: zoom-in;
+  }
+
+  /* CCL 차트 (12페이지) */
+  .ccl-section {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.5vh, 18px);
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .ccl-main-badge {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: clamp(10px, 1.5vh, 16px) clamp(14px, 2vw, 22px);
+    background: white;
+    border-radius: 22px;
+    box-shadow: 0 4px 16px rgba(194,24,91,0.1);
+    align-items: center;
+  }
+
+  .ccl-badge-large {
+    background: linear-gradient(135deg, #F3E5F5, #EDE7F6);
+    border: 2px solid var(--purple);
+    border-radius: 12px;
+    padding: clamp(6px, 0.9vh, 10px) clamp(12px, 1.6vw, 18px);
+    font-size: clamp(11px, 1.2vw, 16px);
+    color: var(--purple);
+    font-weight: 700;
+  }
+
+  .ccl-chart-wrap {
+    background: white;
+    border-radius: 22px;
+    padding: clamp(12px, 1.8vh, 20px) clamp(14px, 2vw, 22px);
+    box-shadow: 0 4px 16px rgba(194,24,91,0.1);
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.2vh, 14px);
+  }
+
+  .ccl-chart-wrap h3 {
+    font-size: clamp(12px, 1.3vw, 17px);
+    color: var(--pink-deep);
+    font-weight: 700;
+  }
+
+  .ccl-chart-wrap svg {
+    max-width: 100%;
+    flex: 1;
+  }
+
+  .ccl-analysis-box {
+    background: white;
+    border-radius: 22px;
+    padding: clamp(10px, 1.5vh, 16px) clamp(14px, 2vw, 22px);
+    box-shadow: 0 4px 16px rgba(194,24,91,0.1);
+    font-size: clamp(10px, 1.05vw, 14px);
+    color: #444;
+    line-height: 1.7;
+  }
+
+  /* CCL 배지 (우하단) */
+  #ccl-corner {
+    position: absolute;
+    bottom: clamp(8px, 1.5vh, 16px);
+    right: clamp(10px, 1.5vw, 20px);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 3px;
+    z-index: 10;
+  }
+
+  /* ══════════════════════════════════════════
+     반응형: 태블릿 (≤ 1024px 가로)
+  ══════════════════════════════════════════ */
+  @media (max-width: 1024px) {
+    .prologue-grid { grid-template-columns: repeat(3, 1fr); }
+    .ability-grid  { grid-template-columns: repeat(2, 1fr); }
+    .influence-grid { grid-template-columns: repeat(2, 1fr); }
+    .speech-bubbles { grid-template-columns: repeat(2, 1fr); }
+    .gallery-grid.cols-5 { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  /* ══════════════════════════════════════════
+     반응형: 모바일 (≤ 640px 또는 세로 방향)
+  ══════════════════════════════════════════ */
+  @media (max-width: 640px), (orientation: portrait) and (max-width: 900px) {
+
+    /* 슬라이드 컨테이너: 16:9 고정 해제 → 전체 화면 */
+    html, body { overflow: hidden; }
+
+    .slide-wrapper {
+      width: 100vw;
+      height: 100dvh; /* 모바일 주소창 제외한 실제 뷰포트 */
+      height: 100vh;  /* fallback */
+    }
+
+    .slide {
+      border-radius: 0;
+      overflow: hidden;
+    }
+
+    /* 슬라이드 헤더: 더 컴팩트 */
+    .slide-header {
+      padding: 10px 16px 6px;
+      flex-shrink: 0;
+    }
+
+    .slide-tag { font-size: 10px; padding: 2px 8px; }
+    .slide-title { font-size: clamp(15px, 5vw, 24px) !important; }
+    .slide-subtitle { font-size: clamp(10px, 3vw, 14px) !important; }
+
+    /* 슬라이드 본문: 스크롤 허용 */
+    .slide-body {
+      padding: 8px 14px 56px; /* 하단 nav 공간 */
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      flex: 1;
+    }
+
+    /* ── 커버 슬라이드 ── */
+    .cover-emoji  { font-size: clamp(32px, 10vw, 52px); }
+    .cover-title  { font-size: clamp(22px, 8vw, 40px) !important; }
+    .cover-teacher { font-size: clamp(14px, 4.5vw, 22px) !important; }
+    .cover-class  { font-size: clamp(11px, 3.5vw, 16px) !important; }
+    .cover-delay p { font-size: 11px; }
+
+    /* ── 프롤로그 ── */
+    .prologue-grid {
+      grid-template-columns: 1fr;
+      gap: 10px;
+      flex: none;
+    }
+    .prologue-item { padding: 14px 16px; }
+    .prologue-icon { font-size: 30px; }
+
+    /* ── 삼행시 ── */
+    .acrostic-container {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto;
+      gap: 10px;
+    }
+    .acrostic-list { max-height: 38vh; overflow-y: auto; }
+    .story-box { min-height: 140px; }
+
+    /* ── 워드클라우드 ── */
+    .wordcloud-wrap {
+      min-height: 200px;
+    }
+    .wordcloud-wrap svg {
+      width: 100%;
+      height: auto;
+    }
+
+    /* ── 능력 카드 ── */
+    .ability-grid {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto;
+      gap: 8px;
+    }
+    .ability-card { padding: 10px 10px; }
+
+    /* ── 영향력 ── */
+    .influence-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .influence-num { font-size: clamp(22px, 7vw, 36px); }
+
+    /* ── 마인드맵 ── */
+    .mindmap-wrap { min-height: 220px; }
+    .mindmap-wrap svg { width: 100%; height: auto; }
+
+    /* ── 말풍선 ── */
+    .speech-bubbles {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .speech-bubble::after { display: none; } /* 모바일에서 꼬리 제거 */
+
+    /* ── 갤러리 ── */
+    .gallery-grid.cols-3,
+    .gallery-grid.cols-4,
+    .gallery-grid.cols-5 {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+    .gallery-item { aspect-ratio: 3 / 4; }
+
+    /* ── 에필로그 ── */
+    .epilogue-wrap {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .reply-section { min-height: 180px; }
+
+    /* ── CCL 부록 ── */
+    .ccl-section { gap: 10px; }
+
+    /* ── 내비게이션 ── */
+    #nav {
+      bottom: max(env(safe-area-inset-bottom, 0px) + 6px, 8px);
+      padding: 6px 14px;
+      gap: 8px;
+      opacity: 0.85;
+    }
+    #nav button { font-size: 20px; padding: 4px 8px; }
+    .dot { width: 7px; height: 7px; }
+    #slide-counter { font-size: 11px; }
+
+    /* ── 키보드 힌트 숨김 ── */
+    #keyboard-hint { display: none; }
+
+    /* ── 배경 버블 숨김 (성능) ── */
+    .bubble { display: none; }
+
+    /* ── 라이트박스 ── */
+    #lightbox img { max-width: 96vw; max-height: 80vh; }
+  }
+
+  /* ══════════════════════════════════════════
+     반응형: 작은 폰 (≤ 375px)
+  ══════════════════════════════════════════ */
+  @media (max-width: 375px) {
+    .ability-grid  { grid-template-columns: 1fr; }
+    .influence-grid { grid-template-columns: 1fr; }
+    .gallery-grid.cols-3,
+    .gallery-grid.cols-4,
+    .gallery-grid.cols-5 {
+      grid-template-columns: 1fr 1fr !important;
+    }
+    .cover-title { font-size: 20px !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="slideshow">
+  <div class="slide-wrapper">
+
+    <!-- 배경 버블 (공통) -->
+    <div class="bubble" style="width:180px;height:180px;top:-60px;left:-60px;"></div>
+    <div class="bubble" style="width:120px;height:120px;bottom:30px;right:-40px;"></div>
+    <div class="bubble" style="width:80px;height:80px;top:40%;left:5%;"></div>
+
+    <!-- ────────────────────────────────────────
+         슬라이드 0: 커버
+    ──────────────────────────────────────── -->
+    <div class="slide active" id="slide-0">
+      <div class="bubble" style="width:220px;height:220px;top:-80px;right:-60px;background:rgba(255,255,255,0.18);"></div>
+      <div class="bubble" style="width:140px;height:140px;bottom:-40px;left:-50px;background:rgba(255,255,255,0.18);"></div>
+
+      <div class="cover-badge">📦 [배송 지연 안내]</div>
+      <span class="cover-emoji">👑💫</span>
+      <div class="cover-class">{{ school }} 1학년 {{ class_id }}반 → {{ teacher_name }} 선생님 ({{ teacher_subject }})</div>
+      <div class="cover-title">우리반 마음 소포</div>
+      <div class="cover-teacher">수신: {{ teacher_name }} 선생님 💌</div>
+      <div class="cover-delay">
+        <p>📬 발송 예정일: {{ sent_date }} (스승의 날)</p>
+        <p>📦 실제 도착일: {{ actual_date }}</p>
+        <p style="margin-top:6px;color:rgba(255,255,255,0.75);font-size:0.9em;">feat. 담당 교사 업무 과다 | 마음에는 유통기한이 없습니다 💝</p>
+      </div>
+
+      <div id="ccl-corner">
+        {% for license in ccl_licenses %}
+        <span class="ccl-badge">{{ license }}</span>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ────────────────────────────────────────
+         슬라이드 1: 프롤로그
+    ──────────────────────────────────────── -->
+    <div class="slide" id="slide-1">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">📮 #0. 프롤로그</div>
+          <div class="slide-title" style="margin-top:4px;">배송이 늦어 죄송합니다</div>
+          <div class="slide-subtitle">하지만 마음에는 유통기한이 없습니다 💌</div>
+        </div>
+      </div>
+      <div class="slide-body">
+        <div class="delay-notice">
+          ⚠️ <strong>배송 지연 안내:</strong> 발송 예정일({{ sent_date }})보다 약 한 달 늦게 도착했습니다. 담당 교사의 업무 과다로 인한 불편을 사과드립니다. 그러나 학생들의 마음은 5월 15일 그 순간 그대로입니다.
+        </div>
+        <div class="prologue-grid">
+          <div class="prologue-item">
+            <span class="prologue-icon">📚</span>
+            <h3>CCL 저작권 교육</h3>
+            <p>학생들이 직접 저작물에 CCL 라이선스를 선택하고 적용하는 법을 배웠습니다. 창작물의 권리를 스스로 지키는 디지털 시민을 기릅니다.</p>
+          </div>
+          <div class="prologue-item">
+            <span class="prologue-icon">💚</span>
+            <h3>사회·정서 학습 (SEL)</h3>
+            <p>감사, 존경, 애정 등 다양한 감정을 언어로 표현하는 연습을 통해 정서 역량을 키웠습니다. 선생님을 향한 진심을 담아냈습니다.</p>
+          </div>
+          <div class="prologue-item">
+            <span class="prologue-icon">🤖</span>
+            <h3>AI·디지털 리터러시</h3>
+            <p>MS Forms로 데이터를 수집하고, AI가 분석한 결과를 카드뉴스로 만들었습니다. 데이터가 의미로 변화하는 과정을 직접 경험했습니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ────────────────────────────────────────
+         슬라이드 2: 삼행시
+    ──────────────────────────────────────── -->
+    <div class="slide" id="slide-2">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">📬 #1. 마음을 잇는 3행시</div>
+          <div class="slide-title" style="margin-top:4px;">소포 안에 편지가 들어 있었습니다</div>
+          <div class="slide-subtitle">기준 글자: <strong style="color:var(--pink-deep)">{{ acrostic_chars|join(', ') }}</strong></div>
+        </div>
+      </div>
+      <div class="slide-body" style="flex-direction:row; gap:clamp(10px,1.5vw,20px);">
+        <div class="acrostic-container" style="width:100%;height:100%;">
+          <div class="acrostic-list">
+            {% for item in acrostic_items %}
+            <div class="acrostic-item">
+              <div class="acrostic-name">학생 {{ loop.index }}</div>
+              <div class="acrostic-lines">
+                {% for char, line in item.lines %}
+                <div><span class="acrostic-char">{{ char }}!</span> {{ line }}</div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="story-box">
+            <div class="story-label">🤖 AI가 연결한 삼행시 스토리</div>
+            <div class="story-text">{{ story_highlighted | default(analysis.story) | default('삼행시 분석 데이터가 없습니다.') | safe }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ────────────────────────────────────────
+         슬라이드 3: 감정 워드클라우드
+    ──────────────────────────────────────── -->
+    <div class="slide" id="slide-3">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">🔍 #2. 소포 내용물 감정 분석</div>
+          <div class="slide-title" style="margin-top:4px;">선생님과 함께할 때 우리의 감정</div>
+          <div class="slide-subtitle">감정 신선도 100% 유지 ✅</div>
+        </div>
+      </div>
+      <div class="slide-body">
+        <div class="wordcloud-wrap">
+          {{ wordcloud_svg | safe }}
+        </div>
+      </div>
+    </div>
+
+    <!-- ────────────────────────────────────────
+         슬라이드 4: 특별한 능력 (1)
+    ──────────────────────────────────────── -->
+    <div class="slide" id="slide-4">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">📋 #3. 수취인 정보 확인</div>
+          <div class="slide-title" style="margin-top:4px;">우리 선생님의 특별한 능력 ①</div>
+          <div class="slide-subtitle">{{ teacher_name }} 선생님이 가진 4가지 매력 카테고리</div>
+        </div>
+      </div>
+      <div class="slide-body">
+        <div class="ability-grid">
+          <div class="ability-card" data-num="①">
+            <div class="ability-card-header">
+              <span class="ability-icon">💛</span>
+              <span class="ability-title">공감 능력</span>
+            </div>
+            <div class="keyword-list">
+              {% for kw in analysis.abilities.공감 | default([]) %}
+              <span class="keyword-chip">{{ kw }}</span>
+              {% else %}
+              <span class="keyword-chip">데이터 없음</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="ability-card" data-num="②">
+            <div class="ability-card-header">
+              <span class="ability-icon">🤝</span>
+              <span class="ability-title">관계 형성</span>
+            </div>
+            <div class="keyword-list">
+              {% for kw in analysis.abilities.관계 | default([]) %}
+              <span class="keyword-chip">{{ kw }}</span>
+              {% else %}
+              <span class="keyword-chip">데이터 없음</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="ability-card" data-num="③">
+            <div class="ability-card-header">
+              <span class="ability-icon">🌱</span>
+              <span class="ability-title">정서 지원</span>
+            </div>
+            <div class="keyword-list">
+              {% for kw in analysis.abilities.정서 | default([]) %}
+              <span class="keyword-chip">{{ kw }}</span>
+              {% else %}
+              <span class="keyword-chip">데이터 없음</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="ability-card" data-num="④">
+            <div class="ability-card-header">
+              <span class="ability-icon">✨</span>
+              <span class="ability-title">매력 포인트</span>
+            </div>
+            <div class="keyword-list">
+              {% for kw in analysis.abilities.매력 | default([]) %}
+              <span class="keyword-chip">{{ kw }}</span>
+              {% else %}
+              <span class="keyword-chip">데이터 없음</span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ────────────────────────────────────────
+         슬라이드 5: 특별한 능력 (2)
+    ──────────────────────────────────────── -->
+    <div class="slide" id="slide-5">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">💝 #3. 학생들에게 미치는 영향</div>
+          <div class="slide-title" style="margin-top:4px;">우리 선생님의 특별한 능력 ②</div>
+          <div class="slide-subtitle">학생들의 편지에서 발견한 선생님의 영향력</div>
+        </div>
+      </div>
+      <div class="slide-body">
+        <div class="influence-grid">
+          {% for item in analysis.influences | default([]) %}
+          <div class="influence-item">
+            <div class="influence-num">0{{ loop.index }}</div>
+            <div class="influence-title">{{ item.title }}</div>
+            <div class="influence-desc">{{ item.desc }}</div>
+          </div>
+          {% else %}
+          <div class="influence-item" style="grid-column:1/-1;text-align:center;color:#aaa;">분석 데이터가 없습니다.</div>
+          {% endfor %}
+        </div>
+        {% if analysis.quote %}
+        <div class="quote-box" style="margin-top:clamp(6px,1vh,12px);">
+          {{ analysis.quote }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ────────────────────────────────────────
+         슬라이드 6: 마인드맵
+    ──────────────────────────────────────── -->
+    <div class="slide" id="slide-6">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">💌 #4. 우리 선생님께 마음을 담아</div>
+          <div class="slide-title" style="margin-top:4px;">소포 안의 편지를 펼쳐봤습니다</div>
+          <div class="slide-subtitle">감사 편지에서 발견한 5가지 마음의 결</div>
+        </div>
+      </div>
+      <div class="slide-body">
+        <div class="mindmap-wrap">
+          {{ mindmap_svg | safe }}
+        </div>
+      </div>
+    </div>
+
+    <!-- ────────────────────────────────────────
+         슬라이드 7: 그림 분석
+    ──────────────────────────────────────── -->
+    <div class="slide" id="slide-7">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">🎨 #5. 소포 안의 그림 꾸러미</div>
+          <div class="slide-title" style="margin-top:4px;">우리 마음속 선생님 그리기 — 분석</div>
+          <div class="slide-subtitle">추상적 해석이 필요할 수 있습니다 🖼️</div>
+        </div>
+      </div>
+      <div class="slide-body">
+        <div class="speech-bubbles">
+          {% for bullet in analysis.drawing_bullets | default([]) %}
+          <div class="speech-bubble">
+            <div class="speech-bubble-num">{{ loop.index }}</div>
+            <div>{{ bullet }}</div>
+          </div>
+          {% else %}
+          <div class="speech-bubble" style="grid-column:1/-1;">
+            <div style="color:#aaa;">그림 분석 데이터가 없습니다.</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ────────────────────────────────────────
+         슬라이드 8: 갤러리 1
+    ──────────────────────────────────────── -->
+    <div class="slide" id="slide-8">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">🖼️ #5. 그리기 갤러리 ①</div>
+          <div class="slide-title" style="margin-top:4px;">우리가 그린 선생님</div>
+          <div class="slide-subtitle">{{ images_page1 | length }}개의 작품</div>
+        </div>
+      </div>
+      <div class="slide-body">
+        <div class="gallery-grid cols-{{ [images_page1|length, 3]|max if images_page1|length <= 3 else (4 if images_page1|length <= 8 else 5) }}">
+          {% for img in images_page1 %}
+          <div class="gallery-item" onclick="openLightbox('{{ img.data }}')">
+            {% if img.data %}
+            <img src="{{ img.data }}" alt="학생 {{ loop.index }} 그림">
+            {% else %}
+            <div class="no-img">🎨<br>그림을 준비 중이에요</div>
+            {% endif %}
+            <div class="gallery-name">학생 {{ loop.index }}</div>
+          </div>
+          {% else %}
+          <div style="grid-column:1/-1;text-align:center;color:#aaa;font-size:clamp(12px,1.4vw,18px);padding:40px;">
+            🎨 그림 파일을 images/{{ class_id }}/ 폴더에 배치해주세요
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ────────────────────────────────────────
+         슬라이드 9: 갤러리 2 (이미지 있을 때만)
+    ──────────────────────────────────────── -->
+    <div class="slide" id="slide-9" {% if not images_page2 %}style="display:none!important"{% endif %}>
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">🖼️ #5. 그리기 갤러리 ②</div>
+          <div class="slide-title" style="margin-top:4px;">우리가 그린 선생님 (계속)</div>
+          <div class="slide-subtitle">{{ images_page2 | length }}개의 작품 (계속)</div>
+        </div>
+      </div>
+      <div class="slide-body">
+        <div class="gallery-grid cols-{{ [images_page2|length, 3]|max if images_page2|length <= 3 else (4 if images_page2|length <= 8 else 5) }}">
+          {% for img in images_page2 %}
+          <div class="gallery-item" onclick="openLightbox('{{ img.data }}')">
+            {% if img.data %}
+            <img src="{{ img.data }}" alt="학생 {{ loop.index + 10 }} 그림" style="object-fit:contain;">
+            {% else %}
+            <div class="no-img">🎨<br>그림을 준비 중이에요</div>
+            {% endif %}
+            <div class="gallery-name">학생 {{ loop.index + 10 }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ────────────────────────────────────────
+         슬라이드 10: 에필로그 (Firebase)
+    ──────────────────────────────────────── -->
+    <div class="slide" id="slide-10">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">✅ #6. 배송 완료</div>
+          <div class="slide-title" style="margin-top:4px;">에필로그 — 선생님의 답장</div>
+          <div class="slide-subtitle">수령 확인 후 답장을 남겨주세요 💝</div>
+        </div>
+      </div>
+      <div class="slide-body">
+        <div class="epilogue-wrap">
+          <div class="epilogue-message">
+            <div class="epilogue-delivered">✅ 배송이 완료되었습니다</div>
+            <div class="epilogue-count">
+              학생들의 마음이 무사히 도착했습니다.<br>
+              1학년 {{ class_id }}반 학생들이 {{ teacher_name }} 선생님을 위해 정성껏 준비했습니다.<br><br>
+              수령 확인 후 아래에 답장을 남겨주시면<br>
+              학생들과 함께 공유할 예정입니다. 💝
+            </div>
+          </div>
+
+          <div class="reply-section">
+            <div style="font-size:clamp(12px,1.3vw,17px);font-weight:700;color:var(--pink-deep);">💌 선생님 답장</div>
+
+            <div id="reply-display" class="empty"></div>
+
+            <div id="write-area">
+              <textarea id="reply-textarea" rows="3" placeholder="학생들에게 하고 싶은 말을 적어주세요..." style="caret-color:#C2185B;"></textarea>
+              <button class="btn-primary" onclick="submitReply()">💌 답장 보내기</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ────────────────────────────────────────
+         슬라이드 11: 부록
+    ──────────────────────────────────────── -->
+    <div class="slide" id="slide-11">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">⚖️ #7. CCL 저작권</div>
+          <div class="slide-title" style="margin-top:4px;">우리 작품의 저작권 라이선스</div>
+          <div class="slide-subtitle">학생들이 직접 선택한 CCL — 저작자: {{ school }} {{ class_id }}반 ({{ year }})</div>
+        </div>
+      </div>
+      <div class="slide-body">
+        <div class="ccl-section">
+          <!-- CCL 라이선스 배지 모음 -->
+          <div class="ccl-main-badge">
+            <span style="font-size:clamp(12px,1.3vw,17px);font-weight:700;color:var(--purple);margin-right:8px;">적용된 라이선스:</span>
+            {% for license in ccl_licenses %}
+            <span class="ccl-badge-large">{{ license }}</span>
+            {% else %}
+            <span class="ccl-badge-large">CC BY-NC-SA 4.0</span>
+            {% endfor %}
+          </div>
+
+          <!-- CCL 선택 통계 차트 -->
+          {% if ccl_chart_svg %}
+          <div class="ccl-chart-wrap">
+            <h3>📊 학생별 CCL 선택 현황</h3>
+            {{ ccl_chart_svg | safe }}
+          </div>
+          {% endif %}
+
+          <!-- AI 성향 분석 -->
+          {% if analysis.ccl_analysis %}
+          <div class="ccl-analysis-box">
+            <strong style="color:var(--pink-deep);">🤖 AI 성향 분석:</strong> {{ analysis.ccl_analysis }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.slide-wrapper -->
+</div><!-- /#slideshow -->
+
+<!-- 라이트박스 -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="확대 이미지">
+</div>
+
+<!-- 내비게이션 -->
+<div id="nav">
+  <button id="btn-prev" onclick="changeSlide(-1)" disabled>◀</button>
+  <div class="dot-nav" id="dot-nav"></div>
+  <span id="slide-counter">1 / 12</span>
+  <button id="btn-next" onclick="changeSlide(1)">▶</button>
+</div>
+
+<div id="keyboard-hint">← → 방향키로 이동</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getFirestore, doc, getDoc, setDoc, serverTimestamp }
+    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "{{ firebase.api_key }}",
+    authDomain: "{{ firebase.auth_domain }}",
+    projectId: "{{ firebase.project_id }}",
+    storageBucket: "{{ firebase.storage_bucket | default('') }}",
+    messagingSenderId: "{{ firebase.messaging_sender_id | default('') }}",
+    appId: "{{ firebase.app_id | default('') }}"
+  };
+
+  const CLASS_ID = "{{ class_id }}";
+  let db;
+
+  try {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+  } catch(e) {
+    console.warn('Firebase 초기화 실패 (설정 필요):', e.message);
+  }
+
+  // 답장 불러오기
+  async function loadReply() {
+    if (!db) return;
+    try {
+      const snap = await getDoc(doc(db, 'replies', CLASS_ID));
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.is_published && data.reply_text) {
+          const el = document.getElementById('reply-display');
+          el.textContent = data.reply_text;
+          el.classList.remove('empty');
+          document.getElementById('reply-textarea').value = data.reply_text;
+        }
+      }
+    } catch(e) { console.warn('답장 로드 실패:', e.message); }
+  }
+
+  window.submitReply = async () => {
+    const text = document.getElementById('reply-textarea').value.trim();
+    if (!text) { alert('답장 내용을 입력해주세요.'); return; }
+    if (!db) { alert('Firebase 설정이 필요합니다. config.yaml을 확인해주세요.'); return; }
+    try {
+      await setDoc(doc(db, 'replies', CLASS_ID), {
+        teacher_name: "{{ teacher_name }}",
+        reply_text: text,
+        replied_at: serverTimestamp(),
+        is_published: true
+      });
+      const el = document.getElementById('reply-display');
+      el.textContent = text;
+      el.classList.remove('empty');
+      alert('💌 답장이 전송되었습니다! 학생들이 볼 수 있습니다.');
+    } catch(e) { alert('저장 실패: ' + e.message); }
+  };
+
+  loadReply();
+</script>
+
+<!-- 슬라이드 내비게이션 JS -->
+<script>
+  const SLIDES = Array.from(document.querySelectorAll('.slide'));
+  const HAS_GALLERY2 = {{ 'true' if images_page2 else 'false' }};
+  const VISIBLE_SLIDES = SLIDES.filter(s => !s.style.display.includes('none!important') &&
+    (HAS_GALLERY2 || s.id !== 'slide-9'));
+  let current = 0;
+
+  const dotNav = document.getElementById('dot-nav');
+
+  VISIBLE_SLIDES.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goTo(i);
+    dotNav.appendChild(dot);
+  });
+
+  function goTo(n) {
+    VISIBLE_SLIDES[current].classList.remove('active');
+    document.querySelectorAll('.dot')[current].classList.remove('active');
+    current = Math.max(0, Math.min(n, VISIBLE_SLIDES.length - 1));
+    VISIBLE_SLIDES[current].classList.add('active');
+    document.querySelectorAll('.dot')[current].classList.add('active');
+    document.getElementById('slide-counter').textContent =
+      `${current + 1} / ${VISIBLE_SLIDES.length}`;
+    document.getElementById('btn-prev').disabled = current === 0;
+    document.getElementById('btn-next').disabled = current === VISIBLE_SLIDES.length - 1;
+  }
+
+  window.changeSlide = (dir) => goTo(current + dir);
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+  });
+
+  // 터치 스와이프 (가로 스와이프만, 세로 스크롤 허용)
+  let touchStartX = 0, touchStartY = 0;
+  document.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    // 가로 이동이 세로 이동보다 클 때만 슬라이드 전환
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      changeSlide(dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
+
+  goTo(0);
+
+  // 라이트박스
+  window.openLightbox = (src) => {
+    if (!src) return;
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').classList.add('open');
+  };
+  window.closeLightbox = () => {
+    document.getElementById('lightbox').classList.remove('open');
+    document.getElementById('lightbox-img').src = '';
+  };
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeLightbox();
+  });
+</script>
+
+</body>
+</html>
