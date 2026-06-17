@@ -8,6 +8,34 @@
 # 대용량 정적 빌드 산출물 (애니메이션 사이트에 미사용)
 docs/*_card_news.html
 
+# Claude Code 로컬 설정 / 환경 템플릿
+.claude/
+.env.example
+
+# 개발용 임시·디버그 스크립트 및 산출물 (작업 중 일회성)
+_*
+build_1_2.py
+check_*.py
+chk_*.py
+dump*.py
+scan_*.py
+recover*.py
+extract_*.py
+find_*.py
+list_*.py
+assess_*.py
+debug_*.py
+splice_*.py
+fix_consolewarn.py
+fix_encoding.py
+fix_firebase_script.py
+fix_gallery.py
+fix_js_strings.py
+fix_js_strings2.py
+fix_mindmap.py
+fix_playlabel.py
+fix_scenes.py
+
 __pycache__/
 *.pyc
 *.pyo
