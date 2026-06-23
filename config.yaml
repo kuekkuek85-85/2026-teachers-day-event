@@ -25,9 +25,9 @@ classes:
     subject: "과학"
     acrostic_chars: ["명", "소", "현"]
   "1-4":
-    teacher: ""
-    subject: ""
-    acrostic_chars: []
+    teacher: "최정아"
+    subject: "영어"
+    acrostic_chars: ["최", "정", "아"]
   "1-5":
     teacher: "강예진"
     subject: "과학"

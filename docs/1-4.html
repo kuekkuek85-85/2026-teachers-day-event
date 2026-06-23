@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Caveat:wght@500;700&family=Gaegu:wght@700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:100%; height:100%; background:#2A1622; overflow:hidden; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  @keyframes popIn { 0%{opacity:0;transform:scale(.5)} 60%{opacity:1;transform:scale(1.08)} 100%{transform:scale(1)} }
+  @keyframes slideL { from{opacity:0;transform:translateX(-46px)} to{opacity:1;transform:translateX(0)} }
+  @keyframes slideR { from{opacity:0;transform:translateX(46px)} to{opacity:1;transform:translateX(0)} }
+  @keyframes explode { 0%{opacity:0;transform:translate(-50%,-50%) scale(.2)} 100%{opacity:1;transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty))) scale(1)} }
+  @keyframes growX { from{transform:scaleX(0)} to{transform:scaleX(1)} }
+  @keyframes barGrow { from{width:0} to{width:var(--bw)} }
+  @keyframes flipIn { 0%{opacity:0;transform:perspective(800px) rotateY(38deg) translateY(22px)} 100%{opacity:1;transform:perspective(800px) rotateY(0) translateY(0)} }
+  @keyframes lidOpen { 0%{transform:rotateX(0)} 100%{transform:rotateX(-122deg)} }
+  @keyframes heartFloat { 0%{opacity:0;transform:translate(-50%,0) scale(.5)} 25%{opacity:1} 100%{opacity:0;transform:translate(-50%,-190px) scale(1.15)} }
+  @keyframes floatY { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  @keyframes stamp { 0%{opacity:0;transform:scale(2.4) rotate(-18deg)} 70%{opacity:1;transform:scale(.9) rotate(-12deg)} 100%{transform:scale(1) rotate(-12deg)} }
+  @keyframes wig { 0%,100%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)} }
+</style>
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+  const FIREBASE_CFG = {
+    apiKey: "AIzaSyCPWlsyWigSQcI09jPxSnlR6WG3gaYSzpY",
+    authDomain: "teachers-day-20260616.firebaseapp.com",
+    projectId: "teachers-day-20260616",
+    storageBucket: "teachers-day-20260616.firebasestorage.app",
+    messagingSenderId: "916421233914",
+    appId: "1:916421233914:web:303c846523966b3a2c8d43"
+  };
+
+  const app = initializeApp(FIREBASE_CFG);
+  const db = getFirestore(app);
+
+  const CLASS_ID = '1-4';
+  const TEACHER_NAME = '최정아';
+
+  window.ReplyStore = {
+    backend: 'firebase',
+    async load() {
+      try {
+        const snap = await getDoc(doc(db, 'replies', CLASS_ID));
+        if (!snap.exists()) return null;
+        const d = snap.data();
+        return {
+          reply_text: d.reply_text,
+          teacher_name: d.teacher_name,
+          updated_at: d.updated_at?.toDate?.()?.toISOString() ?? d.updated_at
+        };
+      } catch (e) {
+        console.warn('[ReplyStore] load 실패, localStorage 폴백:', e);
+        const raw = localStorage.getItem('maeumsopo_reply_' + CLASS_ID);
+        return raw ? JSON.parse(raw) : null;
+      }
+    },
+    async save(text) {
+      const data = { reply_text: text, teacher_name: TEACHER_NAME, updated_at: serverTimestamp() };
+      try {
+        await setDoc(doc(db, 'replies', CLASS_ID), data, { merge: true });
+      } catch (e) {
+        console.warn('[ReplyStore] Firestore 저장 실패, localStorage 폴백:', e);
+      }
+      const local = { reply_text: text, teacher_name: TEACHER_NAME, updated_at: new Date().toISOString() };
+      localStorage.setItem('maeumsopo_reply_' + CLASS_ID, JSON.stringify(local));
+      return local;
+    }
+  };
+</script>
+</helmet>
+
+<div style="position:fixed;inset:0;background:radial-gradient(circle at 30% 20%, #FFE3EE 0%, #F6DCF2 55%, #EBD3F2 100%);display:flex;align-items:center;justify-content:center;font-family:'Noto Sans KR',sans-serif;">
+  <div style="transform:{{ stageTransform }};transform-origin:center center;">
+    <div style="width:1280px;height:720px;position:relative;background:#fff;border-radius:26px;overflow:hidden;box-shadow:0 50px 120px rgba(150,30,90,.4), 0 8px 30px rgba(150,30,90,.2);">
+
+      <!-- ══ SCENE 1 — COVER ══ -->
+      <sc-if value="{{ isScene0 }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(circle at 50% 32%, #FFD9E8 0%, #FFB8D6 55%, #F5A0CE 100%);overflow:hidden;">
+        <div style="position:absolute;top:-70px;right:-60px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.22);"></div>
+        <div style="position:absolute;bottom:-60px;left:-50px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.18);"></div>
+        <div style="position:absolute;top:34px;left:50%;transform:translateX(-50%) rotate(-2deg);background:#FF7043;color:#fff;font-weight:800;font-size:17px;letter-spacing:.5px;padding:9px 22px;border-radius:8px;box-shadow:0 6px 18px rgba(255,112,67,.4);animation:fadeUp .6s both;">📦 배송 지연 에디션 · DELIVERY DELAYED</div>
+
+        <div style="position:relative;width:240px;height:182px;margin-bottom:6px;animation:floatY 4s ease-in-out infinite;">
+          <div style="position:absolute;left:50%;top:6px;transform:translateX(-50%);font-size:42px;animation:heartFloat 2.4s ease-out .9s infinite;">💌</div>
+          <div style="position:absolute;left:38%;top:6px;transform:translateX(-50%);font-size:30px;animation:heartFloat 2.6s ease-out 1.3s infinite;">💛</div>
+          <div style="position:absolute;left:62%;top:6px;transform:translateX(-50%);font-size:30px;animation:heartFloat 2.8s ease-out 1.7s infinite;">🧡</div>
+          <div style="position:absolute;bottom:0;left:0;width:240px;height:128px;border-radius:12px;background:linear-gradient(160deg,#E8B57C,#D2974F);box-shadow:0 18px 34px rgba(120,70,20,.35);"></div>
+          <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:46px;height:128px;background:rgba(255,255,255,.32);"></div>
+          <div style="position:absolute;bottom:62px;left:0;width:240px;height:8px;background:rgba(255,255,255,.3);"></div>
+          <div style="position:absolute;top:38px;left:50%;transform:translateX(-50%);width:200px;height:20px;background:#C9883F;border-radius:4px;"></div>
+          <div style="position:absolute;top:18px;left:20px;width:200px;height:42px;background:linear-gradient(160deg,#E0A968,#CE8E45);border-radius:8px 8px 4px 4px;transform-origin:50% 100%;animation:lidOpen .9s cubic-bezier(.5,-0.3,.4,1.2) .5s both;"></div>
+        </div>
+
+        <div style="font-family:'Caveat',cursive;font-size:30px;font-weight:700;color:#C2185B;margin-top:8px;animation:fadeUp .6s .3s both;">Our Class's Heart Parcel</div>
+        <div style="font-size:74px;font-weight:900;color:#2A1622;letter-spacing:-2px;line-height:1.05;margin-top:2px;animation:fadeUp .7s .45s both;">우리반 마음 소포</div>
+        <div style="font-size:23px;font-weight:700;color:#7B1FA2;margin-top:14px;animation:fadeUp .6s .65s both;">수신 : 최정아 선생님 💛</div>
+        <div style="display:flex;gap:22px;margin-top:22px;animation:fadeUp .6s .85s both;">
+          <div style="background:rgba(255,255,255,.65);border-radius:12px;padding:10px 18px;font-size:14px;font-weight:700;color:#9B3D63;">📭 발송 예정 · 2026.05.15 (스승의날)</div>
+          <div style="background:rgba(255,255,255,.65);border-radius:12px;padding:10px 18px;font-size:14px;font-weight:700;color:#9B3D63;">📦 실제 도착 · 2026.06.15</div>
+        </div>
+        <div style="font-size:14px;color:#8B4A66;margin-top:16px;font-weight:600;animation:fadeIn 1s 1.1s both;">장평중학교 1학년 1-4반 · 마음에는 유통기한이 없습니다 💝</div>
+      </div>
+      </sc-if>
+
+      <!-- SCENE 2 PROLOGUE -->
+      <sc-if value="{{ isScene1 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:54px 64px;background:linear-gradient(160deg,#FFF6FA,#FBEAF6);overflow:hidden;">
+        <div style="align-self:flex-start;background:#C2185B;color:#fff;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;animation:slideL .6s both;">📦 PROLOGUE · 소포 개봉을 시작합니다</div>
+        <div style="font-size:44px;font-weight:900;color:#2A1622;letter-spacing:-1px;margin-top:14px;animation:fadeUp .6s .1s both;">드디어 소포가 도착했습니다</div>
+        <div style="font-size:18px;color:#9B5B73;font-weight:600;margin-top:6px;animation:fadeUp .6s .2s both;">담당 교사 업무 과다로 늦었지만, 마음은 우선하는 5월 15일 그대로입니다 ✨</div>
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:auto;margin-bottom:auto;">
+          <div style="background:#fff;border-radius:22px;padding:26px 20px;text-align:center;box-shadow:0 16px 38px rgba(194,24,91,.12);border:2px solid #FFE0EC;animation:popIn .6s .35s both;">
+            <div style="font-size:34px;">👨‍👩‍👧‍👦</div>
+            <div style="font-size:52px;font-weight:900;color:#C2185B;line-height:1;margin-top:8px;">24<span style="font-size:22px;">명</span></div>
+            <div style="font-size:15px;font-weight:700;color:#6B4356;margin-top:8px;">마음을 보낸 학생</div>
+          </div>
+          <div style="background:#fff;border-radius:22px;padding:26px 20px;text-align:center;box-shadow:0 16px 38px rgba(123,31,162,.12);border:2px solid #EFE0F7;animation:popIn .6s .5s both;">
+            <div style="font-size:34px;">✍️</div>
+            <div style="font-size:30px;font-weight:900;color:#7B1FA2;line-height:1.2;margin-top:10px;letter-spacing:1px;white-space:nowrap;">최 · 정 · 아</div>
+            <div style="font-size:15px;font-weight:700;color:#6B4356;margin-top:8px;">삼행시 기준 글자</div>
+          </div>
+          <div style="background:#fff;border-radius:22px;padding:26px 20px;text-align:center;box-shadow:0 16px 38px rgba(0,188,212,.14);border:2px solid #D5F3F8;animation:popIn .6s .65s both;">
+            <div style="font-size:34px;">📚</div>
+            <div style="font-size:48px;font-weight:900;color:#00A5BC;line-height:1;margin-top:10px;">영어</div>
+            <div style="font-size:15px;font-weight:700;color:#6B4356;margin-top:8px;">담임 선생님 담당 과목</div>
+          </div>
+          <div style="background:#fff;border-radius:22px;padding:26px 20px;text-align:center;box-shadow:0 16px 38px rgba(255,112,67,.14);border:2px solid #FFE3D6;animation:popIn .6s .8s both;">
+            <div style="font-size:34px;">📦</div>
+            <div style="font-size:38px;font-weight:900;color:#FF7043;line-height:1.05;margin-top:14px;">2026<br>06.15</div>
+            <div style="font-size:15px;font-weight:700;color:#6B4356;margin-top:8px;">소포 도착일</div>
+          </div>
+        </div>
+        <div style="font-family:'Caveat',cursive;font-size:24px;color:#B05780;text-align:center;animation:fadeIn 1s 1s both;">Happy Teacher's Day, a little late but full of love 💌</div>
+      </div>
+      </sc-if>
+
+      <!-- ══ SCENE 3A — ACROSTIC 1/4 ══ -->
+      <sc-if value="{{ isScene2 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:46px 60px 36px;background:linear-gradient(160deg,#FFF6FA,#F7E9F5);overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:12px;animation:slideL .6s both;">
+          <div style="background:#C2185B;color:#fff;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;">📬 #1. 마음을 잇는 삼행시</div>
+          <div style="font-size:14px;color:#9B5B73;font-weight:600;">① 1~6번</div>
+        </div>
+        <div style="font-size:38px;font-weight:900;color:#2A1622;letter-spacing:-1px;margin-top:10px;animation:fadeUp .6s .1s both;">소포 안에 편지가 들어 있었습니다</div>
+        <div style="font-size:16px;color:#9B5B73;font-weight:600;margin-top:4px;animation:fadeUp .6s .2s both;">학생 1~6/24명 · 기준 글자 : <strong style="color:#C2185B;">최 · 정 · 아</strong></div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px;flex:1;">
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(194,24,91,.1);border-top:5px solid #FF6B9D;animation:fadeUp .55s 0.35s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#C2185B;background:#FFE7F0;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 1</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#C2185B">최!</b> 최고의 선생님<br><b style="color:#C2185B">정!</b> 정아쌤<br><b style="color:#C2185B">아!</b> 아름다우세요</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(123,31,162,.1);border-top:5px solid #7B1FA2;animation:fadeUp .55s 0.45s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#7B1FA2;background:#F1E4F8;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 2</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#7B1FA2">최!</b> 최선을다하시고<br><b style="color:#7B1FA2">정!</b> 정성을 담아 우리반을 돌봐주시는<br><b style="color:#7B1FA2">아!</b> 아름다운 최정아 선생님</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(0,188,212,.12);border-top:5px solid #00BCD4;animation:fadeUp .55s 0.55s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#00A5BC;background:#D9F4F8;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 3</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#00A5BC">최!</b> 최고의 미소로 우리 반을 밝혀주시고<br><b style="color:#00A5BC">정!</b> 정다운 말로 저희 맘을 곱게 하시는<br><b style="color:#00A5BC">아!</b> 아름다우신 최정아쌤 최고!!</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(255,112,67,.12);border-top:5px solid #FF7043;animation:fadeUp .55s 0.65s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#E8531F;background:#FFE6DA;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 4</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#E8531F">최!</b> 최고 최정아쌤!<br><b style="color:#E8531F">정!</b> 정말 이쁘세요<br><b style="color:#E8531F">아!</b> 아프지마시고 평생 건강하세요!</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(67,160,71,.12);border-top:5px solid #43A047;animation:fadeUp .55s 0.75s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#388E3C;background:#E8F5E9;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 5</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#388E3C">최!</b> 최고인데<br><b style="color:#388E3C">정!</b> 정말 예쁘시기 까지한 우리반의<br><b style="color:#388E3C">아!</b> 아이돌 정아 쌤💕</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(25,118,210,.12);border-top:5px solid #1976D2;animation:fadeUp .55s 0.85s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#1565C0;background:#E3F2FD;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 6</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#1565C0">최!</b> 최고의 선생님이신<br><b style="color:#1565C0">정!</b> 정아쌤<br><b style="color:#1565C0">아!</b> 아주 많이 사랑합니다💝</div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ══ SCENE 3B — ACROSTIC 2/4 ══ -->
+      <sc-if value="{{ isScene3 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:46px 60px 36px;background:linear-gradient(160deg,#FFF6FA,#F7E9F5);overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:12px;animation:slideL .6s both;">
+          <div style="background:#C2185B;color:#fff;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;">📬 #1. 마음을 잇는 삼행시</div>
+          <div style="font-size:14px;color:#9B5B73;font-weight:600;">② 7~12번</div>
+        </div>
+        <div style="font-size:38px;font-weight:900;color:#2A1622;letter-spacing:-1px;margin-top:10px;animation:fadeUp .6s .1s both;">소포 안에 편지가 들어 있었습니다</div>
+        <div style="font-size:16px;color:#9B5B73;font-weight:600;margin-top:4px;animation:fadeUp .6s .2s both;">학생 7~12/24명 · 기준 글자 : <strong style="color:#C2185B;">최 · 정 · 아</strong></div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px;flex:1;">
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(194,24,91,.1);border-top:5px solid #FF6B9D;animation:fadeUp .55s 0.35s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#C2185B;background:#FFE7F0;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 7</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#C2185B">최!</b> 최고이신<br><b style="color:#C2185B">정!</b> 정말로<br><b style="color:#C2185B">아!</b> 아름다우신 선생님</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(123,31,162,.1);border-top:5px solid #7B1FA2;animation:fadeUp .55s 0.45s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#7B1FA2;background:#F1E4F8;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 8</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#7B1FA2">최!</b> 최정아 선생님은<br><b style="color:#7B1FA2">정!</b> 정말로<br><b style="color:#7B1FA2">아!</b> 아름답고 천사시다</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(0,188,212,.12);border-top:5px solid #00BCD4;animation:fadeUp .55s 0.55s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#00A5BC;background:#D9F4F8;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 9</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#00A5BC">최!</b> 최정아 선생님<br><b style="color:#00A5BC">정!</b> 정말 너무너무<br><b style="color:#00A5BC">아!</b> 아름다우신 최정아 선생님 항상 너무너무 감사하고 사랑합니당</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(255,112,67,.12);border-top:5px solid #FF7043;animation:fadeUp .55s 0.65s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#E8531F;background:#FFE6DA;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 10</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#E8531F">최!</b> 최정아 선생님은<br><b style="color:#E8531F">정!</b> 정직하시고<br><b style="color:#E8531F">아!</b> 아름다우십니다.</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(67,160,71,.12);border-top:5px solid #43A047;animation:fadeUp .55s 0.75s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#388E3C;background:#E8F5E9;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 11</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#388E3C">최!</b> 최정아쌤최고<br><b style="color:#388E3C">정!</b> 정아쌤 수업 재밌어요<br><b style="color:#388E3C">아!</b> 아 빨리 영어 수업 와라</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(25,118,210,.12);border-top:5px solid #1976D2;animation:fadeUp .55s 0.85s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#1565C0;background:#E3F2FD;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 12</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#1565C0">최!</b> 최정아 선생님은<br><b style="color:#1565C0">정!</b> 정말로 저희들을 아껴주시고<br><b style="color:#1565C0">아!</b> 아름다우세요!</div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ══ SCENE 3C — ACROSTIC 3/4 ══ -->
+      <sc-if value="{{ isScene4 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:46px 60px 36px;background:linear-gradient(160deg,#FFF6FA,#F7E9F5);overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:12px;animation:slideL .6s both;">
+          <div style="background:#C2185B;color:#fff;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;">📬 #1. 마음을 잇는 삼행시</div>
+          <div style="font-size:14px;color:#9B5B73;font-weight:600;">③ 13~18번</div>
+        </div>
+        <div style="font-size:38px;font-weight:900;color:#2A1622;letter-spacing:-1px;margin-top:10px;animation:fadeUp .6s .1s both;">소포 안에 편지가 들어 있었습니다</div>
+        <div style="font-size:16px;color:#9B5B73;font-weight:600;margin-top:4px;animation:fadeUp .6s .2s both;">학생 13~18/24명 · 기준 글자 : <strong style="color:#C2185B;">최 · 정 · 아</strong></div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px;flex:1;">
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(194,24,91,.1);border-top:5px solid #FF6B9D;animation:fadeUp .55s 0.35s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#C2185B;background:#FFE7F0;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 13</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#C2185B">최!</b> 최정아 선생님!<br><b style="color:#C2185B">정!</b> 정말 정말 감사합니다<br><b style="color:#C2185B">아!</b> 아름다운 최정아 선생님 사랑합니당</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(123,31,162,.1);border-top:5px solid #7B1FA2;animation:fadeUp .55s 0.45s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#7B1FA2;background:#F1E4F8;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 14</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#7B1FA2">최!</b> 최정아쌤<br><b style="color:#7B1FA2">정!</b> 정말로 진심으로하는 이야기인데<br><b style="color:#7B1FA2">아!</b> 아이스크림 사주세요</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(0,188,212,.12);border-top:5px solid #00BCD4;animation:fadeUp .55s 0.55s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#00A5BC;background:#D9F4F8;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 15</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#00A5BC">최!</b> 최정아선생님<br><b style="color:#00A5BC">정!</b> 정말<br><b style="color:#00A5BC">아!</b> 아름다우세요</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(255,112,67,.12);border-top:5px solid #FF7043;animation:fadeUp .55s 0.65s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#E8531F;background:#FFE6DA;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 16</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#E8531F">최!</b> 최고의 선생님<br><b style="color:#E8531F">정!</b> 정아쌤<br><b style="color:#E8531F">아!</b> 아름다우세요</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(67,160,71,.12);border-top:5px solid #43A047;animation:fadeUp .55s 0.75s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#388E3C;background:#E8F5E9;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 17</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#388E3C">최!</b> 최정아선생님은<br><b style="color:#388E3C">정!</b> 정의로우시고<br><b style="color:#388E3C">아!</b> 아이들을 사랑하시는 최고의 선생님이시다</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(25,118,210,.12);border-top:5px solid #1976D2;animation:fadeUp .55s 0.85s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#1565C0;background:#E3F2FD;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 18</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#1565C0">최!</b> 최선을 다하여 저희를 가르켜주시는<br><b style="color:#1565C0">정!</b> 정아 선생님 정말 최고에용<br><b style="color:#1565C0">아!</b> 아이스크림 저번에 잘먹었어용</div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ══ SCENE 3D — ACROSTIC 4/4 ══ -->
+      <sc-if value="{{ isScene5 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:46px 60px 36px;background:linear-gradient(160deg,#FFF6FA,#F7E9F5);overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:12px;animation:slideL .6s both;">
+          <div style="background:#C2185B;color:#fff;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;">📬 #1. 마음을 잇는 삼행시</div>
+          <div style="font-size:14px;color:#9B5B73;font-weight:600;">④ 19~24번</div>
+        </div>
+        <div style="font-size:38px;font-weight:900;color:#2A1622;letter-spacing:-1px;margin-top:10px;animation:fadeUp .6s .1s both;">소포 안에 편지가 들어 있었습니다</div>
+        <div style="font-size:16px;color:#9B5B73;font-weight:600;margin-top:4px;animation:fadeUp .6s .2s both;">학생 19~24/24명 · 기준 글자 : <strong style="color:#C2185B;">최 · 정 · 아</strong></div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px;flex:1;">
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(194,24,91,.1);border-top:5px solid #FF6B9D;animation:fadeUp .55s 0.35s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#C2185B;background:#FFE7F0;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 19</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#C2185B">최!</b> 최고이고,<br><b style="color:#C2185B">정!</b> 정말로 수업을 재미있게 해주시고<br><b style="color:#C2185B">아!</b> 아름다우신 최정아 선생님, 언제나 감사합니다.</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(123,31,162,.1);border-top:5px solid #7B1FA2;animation:fadeUp .55s 0.45s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#7B1FA2;background:#F1E4F8;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 20</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#7B1FA2">최!</b> 최정아 쌤<br><b style="color:#7B1FA2">정!</b> 정말 사랑합니다<br><b style="color:#7B1FA2">아!</b> 아주 많이요!!</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(0,188,212,.12);border-top:5px solid #00BCD4;animation:fadeUp .55s 0.55s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#00A5BC;background:#D9F4F8;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 21</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#00A5BC">최!</b> 최정아 선생님<br><b style="color:#00A5BC">정!</b> 정말<br><b style="color:#00A5BC">아!</b> 아름다우세요</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(255,112,67,.12);border-top:5px solid #FF7043;animation:fadeUp .55s 0.65s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#E8531F;background:#FFE6DA;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 22</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#E8531F">최!</b> 최고의 가르침으로 언제나 저희를 이끌어 주시고<br><b style="color:#E8531F">정!</b> 정답보다 더 소중한 삶의 길을 알려 주신 선생님,<br><b style="color:#E8531F">아!</b> 아직은 다 표현하지 못하지만, 선생님의 사랑과 가르침을 평생 가슴에 담고 살아가겠습니다.</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(67,160,71,.12);border-top:5px solid #43A047;animation:fadeUp .55s 0.75s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#388E3C;background:#E8F5E9;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 23</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#388E3C">최!</b> 최정아 선생님<br><b style="color:#388E3C">정!</b> 정말 감사하고 고맙습니다<br><b style="color:#388E3C">아!</b> 아름답고 예쁜 선생님 감사합니다</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:16px 15px;box-shadow:0 10px 24px rgba(25,118,210,.12);border-top:5px solid #1976D2;animation:fadeUp .55s 0.85s both;overflow:hidden;">
+            <div style="font-size:13px;font-weight:800;color:#1565C0;background:#E3F2FD;display:inline-block;padding:3px 11px;border-radius:999px;margin-bottom:10px;">학생 24</div>
+            <div style="font-size:13px;line-height:1.75;color:#3A2230;"><b style="color:#1565C0">최!</b> 최정아쌤!<br><b style="color:#1565C0">정!</b> 정말로 사랑해여❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️🩷❤️🩷❤️🩷❤️❤️🩷❤️🩷❤️🩷❤️🩷❤️🩷❤️🩷❤️🩷❤️🩷❤️🩷❤️🩷❤️<br><b style="color:#1565C0">아!</b> 아름다운 우유빛깔 최정아쌔에엠</div>
+          </div>
+        </div>
+        <div style="margin-top:16px;background:linear-gradient(135deg,#C2185B,#7B1FA2);border-radius:18px;padding:18px 24px;color:#fff;box-shadow:0 14px 36px rgba(123,31,162,.28);animation:fadeUp .6s 1s both;">
+          <div style="font-size:14px;font-weight:800;opacity:.92;margin-bottom:6px;">🤖 AI가 24명의 삼행시를 하나로 연결했습니다</div>
+          <div style="font-size:14.5px;line-height:1.7;font-weight:500;">최정아 선생님, 저희가 보낸 이 진심 가득한 마음이 혹시 배송 지연될까 봐 조마조마했어요. '<em style="background:rgba(255,255,255,.28);padding:1px 6px;border-radius:5px;font-style:normal;font-weight:800;">최</em>'고의 미소로 교실을 환하게 밝혀주시고, '정'성을 다해 저희를 돌봐주시는 선생님은 <em style="background:rgba(255,255,255,.28);padding:1px 6px;border-radius:5px;font-style:normal;font-weight:800;">정</em>말 '아'름다운 천사 같으세요. '최'선을 다해 수업을 재미있게 만들어주시는 것은 물론, '정'말 예쁘시기까지 한 저희 반의 '아'이돌이시죠! 항상 저희를 '최'고로 <em style="background:rgba(255,255,255,.28);padding:1px 6px;border-radius:5px;font-style:normal;font-weight:800;">아</em>껴주시는 선생님께, '정'말 많이 사랑하고 감사하다는 이 마음이 지연 없이 도착하기를 간절히 바라요. 아, 그리고 언제든 환영인 아이스크림 배송도 잊지 마세요!</div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ══ SCENE 4 — WORDCLOUD ══ -->
+      <sc-if value="{{ isScene6 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:46px 60px;background:linear-gradient(160deg,#2A1430,#4A1B47 60%,#6B1F52);overflow:hidden;">
+        <div style="align-self:flex-start;background:#00BCD4;color:#08303A;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;animation:slideL .6s both;">📬 #2. 소포 내용별 감정 분석</div>
+        <div style="font-size:40px;font-weight:900;color:#fff;letter-spacing:-1px;margin-top:12px;animation:fadeUp .6s .1s both;">학생들과 함께한 우리반 감정</div>
+        <div style="font-size:17px;color:#F2B8D8;font-weight:600;margin-top:5px;animation:fadeUp .6s .2s both;">감정 우선순위 100% 반영 · 학생 답변에서 추출되었어요</div>
+
+        <div style="position:relative;flex:1;margin-top:4px;">
+          <div style="position:absolute;left:50%;top:50%;--tx:0px;--ty:-6px;font-size:68px;font-weight:900;color:#FF6B9D;animation:explode .7s .35s both;">감사</div>
+          <div style="position:absolute;left:50%;top:50%;--tx:198px;--ty:-58px;font-size:50px;font-weight:900;color:#4DD0E1;animation:explode .7s .5s both;">사랑</div>
+          <div style="position:absolute;left:50%;top:50%;--tx:-200px;--ty:-72px;font-size:46px;font-weight:900;color:#FFD54F;animation:explode .7s .45s both;">건강</div>
+          <div style="position:absolute;left:50%;top:50%;--tx:268px;--ty:54px;font-size:42px;font-weight:900;color:#FF8A65;animation:explode .7s .6s both;">아름다움</div>
+          <div style="position:absolute;left:50%;top:50%;--tx:-300px;--ty:36px;font-size:40px;font-weight:900;color:#CE93D8;animation:explode .7s .55s both;">챙김</div>
+          <div style="position:absolute;left:50%;top:50%;--tx:86px;--ty:-128px;font-size:40px;font-weight:900;color:#FFAB91;animation:explode .7s .9s both;">재미</div>
+          <div style="position:absolute;left:50%;top:50%;--tx:120px;--ty:104px;font-size:38px;font-weight:800;color:#80DEEA;animation:explode .7s .7s both;">친절</div>
+          <div style="position:absolute;left:50%;top:50%;--tx:-128px;--ty:96px;font-size:36px;font-weight:800;color:#F48FB1;animation:explode .7s .65s both;">예뻐함</div>
+          <div style="position:absolute;left:50%;top:50%;--tx:-70px;--ty:-120px;font-size:36px;font-weight:800;color:#B39DDB;animation:explode .7s .85s both;">명강의</div>
+          <div style="position:absolute;left:50%;top:50%;--tx:360px;--ty:-30px;font-size:34px;font-weight:800;color:#F8BBD0;animation:explode .7s .8s both;">다정함</div>
+          <div style="position:absolute;left:50%;top:50%;--tx:-30px;--ty:150px;font-size:34px;font-weight:800;color:#F06292;animation:explode .7s 1.05s both;">자녀처럼</div>
+          <div style="position:absolute;left:50%;top:50%;--tx:-372px;--ty:-44px;font-size:32px;font-weight:800;color:#FFCC80;animation:explode .7s .75s both;">돌봄</div>
+          <div style="position:absolute;left:50%;top:50%;--tx:236px;--ty:138px;font-size:32px;font-weight:800;color:#4DB6AC;animation:explode .7s 1s both;">아낌</div>
+          <div style="position:absolute;left:50%;top:50%;--tx:-250px;--ty:130px;font-size:30px;font-weight:700;color:#9FA8DA;animation:explode .7s .95s both;">멋짐</div>
+          <div style="position:absolute;left:50%;top:50%;--tx:34px;--ty:-178px;font-size:30px;font-weight:700;color:#FFD54F;animation:explode .7s 1.1s both;">행복</div>
+          <div style="position:absolute;left:50%;top:50%;--tx:408px;--ty:104px;font-size:30px;font-weight:800;color:#4DD0E1;animation:explode .7s 1.2s both;">밝음</div>
+          <div style="position:absolute;left:50%;top:50%;--tx:-420px;--ty:78px;font-size:28px;font-weight:700;color:#CE93D8;animation:explode .7s 1.15s both;">가르침</div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ══ SCENE 5 — ABILITIES ══ -->
+      <sc-if value="{{ isScene7 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:46px 60px;background:linear-gradient(160deg,#FFF6FA,#FBEAF6);overflow:hidden;">
+        <div style="align-self:flex-start;background:#C2185B;color:#fff;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;animation:slideL .6s both;">📋 #3. 수취인 정보 확인</div>
+        <div style="font-size:40px;font-weight:900;color:#2A1622;letter-spacing:-1px;margin-top:12px;animation:fadeUp .6s .1s both;">우리 선생님의 특별한 능력</div>
+        <div style="font-size:17px;color:#9B5B73;font-weight:600;margin-top:5px;animation:fadeUp .6s .2s both;">최정아 선생님이 가진 4가지 매력 카테고리</div>
+
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:auto;margin-bottom:auto;">
+          <div style="background:#fff;border-radius:20px;padding:22px 24px;box-shadow:0 14px 32px rgba(194,24,91,.1);border-left:6px solid #FFC107;animation:slideL .55s .35s both;">
+            <div style="display:flex;align-items:center;gap:10px;font-size:21px;font-weight:900;color:#2A1622;margin-bottom:14px;"><span style="font-size:26px;">💛</span> 공감 능력</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              <span style="background:#FFF6DC;color:#A87A06;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">학생 개별 신경</span><span style="background:#FFF6DC;color:#A87A06;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">학습 이해 지원</span><span style="background:#FFF6DC;color:#A87A06;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">학생 참여 유도</span><span style="background:#FFF6DC;color:#A87A06;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">학생 눈높이 수업</span><span style="background:#FFF6DC;color:#A87A06;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">수업 흥미 유발</span>
+            </div>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:22px 24px;box-shadow:0 14px 32px rgba(0,188,212,.12);border-left:6px solid #00BCD4;animation:slideR .55s .5s both;">
+            <div style="display:flex;align-items:center;gap:10px;font-size:21px;font-weight:900;color:#2A1622;margin-bottom:14px;"><span style="font-size:26px;">🤝</span> 관계 형성</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              <span style="background:#DCF5F9;color:#0B7C8C;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">친절</span><span style="background:#DCF5F9;color:#0B7C8C;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">다정</span><span style="background:#DCF5F9;color:#0B7C8C;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">학생 사랑</span><span style="background:#DCF5F9;color:#0B7C8C;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">학생 돌봄</span><span style="background:#DCF5F9;color:#0B7C8C;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">상호 존중</span><span style="background:#DCF5F9;color:#0B7C8C;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">따뜻함</span><span style="background:#DCF5F9;color:#0B7C8C;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">선한 인성</span>
+            </div>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:22px 24px;box-shadow:0 14px 32px rgba(76,175,80,.12);border-left:6px solid #66BB6A;animation:slideL .55s .65s both;">
+            <div style="display:flex;align-items:center;gap:10px;font-size:21px;font-weight:900;color:#2A1622;margin-bottom:14px;"><span style="font-size:26px;">🌱</span> 정서 지원</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              <span style="background:#E2F5E3;color:#2E7D32;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">밝은 에너지</span><span style="background:#E2F5E3;color:#2E7D32;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">긍정적 태도</span><span style="background:#E2F5E3;color:#2E7D32;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">상냥함</span><span style="background:#E2F5E3;color:#2E7D32;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">온화한 미소</span><span style="background:#E2F5E3;color:#2E7D32;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">침착함</span><span style="background:#E2F5E3;color:#2E7D32;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">열정</span><span style="background:#E2F5E3;color:#2E7D32;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">활기찬 분위기</span>
+            </div>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:22px 24px;box-shadow:0 14px 32px rgba(123,31,162,.12);border-left:6px solid #AB47BC;animation:slideR .55s .8s both;">
+            <div style="display:flex;align-items:center;gap:10px;font-size:21px;font-weight:900;color:#2A1622;margin-bottom:14px;"><span style="font-size:26px;">✨</span> 매력 포인트</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              <span style="background:#F3E4F8;color:#7B1FA2;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">매력적인 외모</span><span style="background:#F3E4F8;color:#7B1FA2;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">흥미로운 수업</span><span style="background:#F3E4F8;color:#7B1FA2;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">뛰어난 강의력</span><span style="background:#F3E4F8;color:#7B1FA2;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">카리스마</span><span style="background:#F3E4F8;color:#7B1FA2;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">전문성</span><span style="background:#F3E4F8;color:#7B1FA2;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">반전 매력</span><span style="background:#F3E4F8;color:#7B1FA2;font-weight:700;font-size:14px;padding:7px 14px;border-radius:999px;">전반적인 호감도</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- SCENE 6 INFLUENCE -->
+      <sc-if value="{{ isScene8 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:46px 60px;background:linear-gradient(160deg,#FFF6FA,#F7E9F5);overflow:hidden;">
+        <div style="align-self:flex-start;background:#C2185B;color:#fff;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;animation:slideL .6s both;">📊 #3. 학생들에게 미치는 영향</div>
+        <div style="font-size:40px;font-weight:900;color:#2A1622;letter-spacing:-1px;margin-top:12px;animation:fadeUp .6s .1s both;">선생님이 우리에게 미친 영향은</div>
+        <div style="font-size:17px;color:#9B5B73;font-weight:600;margin-top:5px;animation:fadeUp .6s .2s both;">선생님의 답변에서 발견한 4가지 큰 영향</div>
+
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:20px;">
+          <div style="background:#fff;border-radius:18px;padding:20px 22px;box-shadow:0 12px 28px rgba(194,24,91,.1);animation:fadeUp .55s .35s both;">
+            <div style="display:flex;align-items:baseline;gap:12px;"><span style="font-size:38px;font-weight:900;color:#FF6B9D;line-height:1;">01</span><span style="font-size:19px;font-weight:900;color:#2A1622;">학생에 대한 깊은 보살핌</span></div>
+            <div style="font-size:14px;line-height:1.7;color:#5C4452;margin-top:10px;">학생들은 선생님이 자신들을 자녀처럼 아끼고 돌봐주셨다고 느끼며, 이는 단순한 교육을 넘어선 따뜻한 정서적 유대감을 형성했습니다.</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:20px 22px;box-shadow:0 12px 28px rgba(123,31,162,.1);animation:fadeUp .55s .5s both;">
+            <div style="display:flex;align-items:baseline;gap:12px;"><span style="font-size:38px;font-weight:900;color:#AB47BC;line-height:1;">02</span><span style="font-size:19px;font-weight:900;color:#2A1622;">흥미롭고 효과적인 학습 경험 제공</span></div>
+            <div style="font-size:14px;line-height:1.7;color:#5C4452;margin-top:10px;">특히 영어 과목에서 선생님은 재미있는 활동과 말솜씨로 학생들의 흥미를 유발하고 학습에 대한 긍정적인 태도를 심어주었습니다.</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:20px 22px;box-shadow:0 12px 28px rgba(0,188,212,.12);animation:fadeUp .55s .65s both;">
+            <div style="display:flex;align-items:baseline;gap:12px;"><span style="font-size:38px;font-weight:900;color:#00BCD4;line-height:1;">03</span><span style="font-size:19px;font-weight:900;color:#2A1622;">긍정적인 학교생활 조성</span></div>
+            <div style="font-size:14px;line-height:1.7;color:#5C4452;margin-top:10px;">선생님은 학생들에게 학교가 즐겁고 행복한 공간이라는 인식을 심어주었습니다. 선생님과의 만남을 '행운'이라고 표현하거나 '학교생활이 굿굿'이라고 말하는 학생들의 편지에서, 선생님이 전반적인 학교생활 만족도에 크게 기여…</div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:20px 22px;box-shadow:0 12px 28px rgba(255,112,67,.12);animation:fadeUp .55s .8s both;">
+            <div style="display:flex;align-items:baseline;gap:12px;"><span style="font-size:38px;font-weight:900;color:#FF7043;line-height:1;">04</span><span style="font-size:19px;font-weight:900;color:#2A1622;">학생들의 자긍심을 높이는 멘토 역할</span></div>
+            <div style="font-size:14px;line-height:1.7;color:#5C4452;margin-top:10px;">학생들은 선생님의 제자라는 사실에 자랑스러움을 느끼며, 선생님을 긍정적인 영향력을 가진 롤모델로 여기고 있습니다. 이는 선생님이 지식 전달자를 넘어, 학생들의 인격 성장과 자존감 형성에도 깊이 기여했음을 시사합니다.</div>
+          </div>
+        </div>
+
+        <div style="margin-top:18px;background:#FFEAF2;border-radius:16px;padding:16px 24px;font-size:15px;line-height:1.65;color:#9B3D63;font-weight:600;border-left:5px solid #FF6B9D;animation:fadeUp .6s .95s both;">💬 "선생님 사랑합니다 그리고 저는 선생님의 제자였서 자랑스럽습니다."</div>
+      </div>
+      </sc-if>
+
+      <!-- ══ SCENE 7 — MINDMAP ══ -->
+      <sc-if value="{{ isScene9 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:46px 60px;background:linear-gradient(160deg,#FFF6FA,#FBEAF6);overflow:hidden;">
+        <div style="align-self:flex-start;background:#C2185B;color:#fff;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;animation:slideL .6s both;">💌 #4. 우리 선생님께 마음을 담아</div>
+        <div style="font-size:40px;font-weight:900;color:#2A1622;letter-spacing:-1px;margin-top:12px;animation:fadeUp .6s .1s both;">소포 안의 편지를 펼쳐봤습니다</div>
+        <div style="font-size:17px;color:#9B5B73;font-weight:600;margin-top:5px;animation:fadeUp .6s .2s both;">감사 편지에서 발견한 5가지 마음의 결</div>
+
+        <div style="position:relative;flex:1;margin-top:6px;">
+          <svg viewBox="0 0 960 525" xmlns="http://www.w3.org/2000/svg" style="position:absolute;left:50%;top:50%;width:960px;height:525px;transform:translate(-50%,-50%);overflow:visible;"><defs><radialGradient id="ng0" cx="40%" cy="30%" r="75%"><stop offset="0%" stop-color="#FF9EC8"/><stop offset="100%" stop-color="#C2185B"/></radialGradient><radialGradient id="ng1" cx="40%" cy="30%" r="75%"><stop offset="0%" stop-color="#CE93D8"/><stop offset="100%" stop-color="#7B1FA2"/></radialGradient><radialGradient id="ng2" cx="40%" cy="30%" r="75%"><stop offset="0%" stop-color="#4DD0E1"/><stop offset="100%" stop-color="#00838F"/></radialGradient><radialGradient id="ng3" cx="40%" cy="30%" r="75%"><stop offset="0%" stop-color="#FFAB91"/><stop offset="100%" stop-color="#E64A19"/></radialGradient><radialGradient id="ng4" cx="40%" cy="30%" r="75%"><stop offset="0%" stop-color="#A5D6A7"/><stop offset="100%" stop-color="#2E7D32"/></radialGradient><radialGradient id="cg" cx="40%" cy="35%" r="70%"><stop offset="0%" stop-color="#F06292"/><stop offset="55%" stop-color="#AD1457"/><stop offset="100%" stop-color="#6A1B9A"/></radialGradient><filter id="mds" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="8" flood-color="rgba(0,0,0,0.22)"/></filter><filter id="mds2" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="rgba(194,24,91,0.4)"/></filter></defs><style>.mbr{stroke-dasharray:200;stroke-dashoffset:200;animation:mDrawBr .6s ease-out forwards;}.mbr0{animation-delay:.4s}.mbr1{animation-delay:.52s}.mbr2{animation-delay:.64s}.mbr3{animation-delay:.76s}.mbr4{animation-delay:.88s}@keyframes mDrawBr{to{stroke-dashoffset:0}}.mnd{opacity:0;transform-box:fill-box;transform-origin:center;animation:mNdPop .5s ease-out forwards;}.mnd0{animation-delay:.9s}.mnd1{animation-delay:1.02s}.mnd2{animation-delay:1.14s}.mnd3{animation-delay:1.26s}.mnd4{animation-delay:1.38s}@keyframes mNdPop{0%{opacity:0;transform:scale(.25)}70%{opacity:1;transform:scale(1.08)}100%{opacity:1;transform:scale(1)}}.mct{opacity:0;transform-box:fill-box;transform-origin:center;animation:mNdPop .65s ease-out .2s forwards;}.mdc{opacity:0;animation:mDcFade 1.2s ease .3s forwards;}@keyframes mDcFade{to{opacity:1}}</style><ellipse class="mdc" cx="120" cy="80" rx="92" ry="66" fill="#FFE4EE" opacity="0.4"/><ellipse class="mdc" cx="840" cy="70" rx="80" ry="58" fill="#EDE7F6" opacity="0.38"/><ellipse class="mdc" cx="820" cy="455" rx="98" ry="66" fill="#E0F7FA" opacity="0.4"/><ellipse class="mdc" cx="120" cy="450" rx="84" ry="62" fill="#E8F5E9" opacity="0.4"/><circle cx="480" cy="255" r="170" fill="#FFF0F6" opacity="0.16"/><line class="mbr mbr0" x1="480" y1="255" x2="480" y2="70" stroke="#FF6B9D" stroke-width="6" stroke-linecap="round" opacity="0.85"/><line class="mbr mbr1" x1="480" y1="255" x2="656" y2="198" stroke="#AB47BC" stroke-width="6" stroke-linecap="round" opacity="0.85"/><line class="mbr mbr2" x1="480" y1="255" x2="589" y2="405" stroke="#00BCD4" stroke-width="6" stroke-linecap="round" opacity="0.85"/><line class="mbr mbr3" x1="480" y1="255" x2="371" y2="405" stroke="#FF7043" stroke-width="6" stroke-linecap="round" opacity="0.85"/><line class="mbr mbr4" x1="480" y1="255" x2="304" y2="198" stroke="#66BB6A" stroke-width="6" stroke-linecap="round" opacity="0.85"/><circle class="mnd mnd0" cx="480" cy="171" r="6.5" fill="#FF6B9D"/><circle class="mnd mnd1" cx="560" cy="229" r="6.5" fill="#AB47BC"/><circle class="mnd mnd2" cx="529" cy="323" r="6.5" fill="#00BCD4"/><circle class="mnd mnd3" cx="431" cy="323" r="6.5" fill="#FF7043"/><circle class="mnd mnd4" cx="400" cy="229" r="6.5" fill="#66BB6A"/><g class="mnd mnd0"><rect x="392" y="14" width="176" height="112" rx="20" fill="url(#ng0)" filter="url(#mds)"/><rect x="392" y="14" width="176" height="112" rx="20" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"/><text x="480" y="41" text-anchor="middle" font-size="20">🙏</text><text x="480" y="63" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="900" font-size="16" fill="white">감사함</text><text x="480" y="82" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="600" font-size="10.5" fill="rgba(255,255,255,0.92)">잘 가르쳐 주심</text><text x="480" y="98" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="600" font-size="10.5" fill="rgba(255,255,255,0.92)">늘 챙겨 주심</text><text x="480" y="114" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="600" font-size="10.5" fill="rgba(255,255,255,0.92)">노력 인정함</text></g><g class="mnd mnd1"><rect x="568" y="142" width="176" height="112" rx="20" fill="url(#ng1)" filter="url(#mds)"/><rect x="568" y="142" width="176" height="112" rx="20" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"/><text x="656" y="169" text-anchor="middle" font-size="20">💗</text><text x="656" y="191" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="900" font-size="16" fill="white">사랑함</text><text x="656" y="210" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="600" font-size="10.5" fill="rgba(255,255,255,0.92)">진심으로 사랑함</text><text x="656" y="226" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="600" font-size="10.5" fill="rgba(255,255,255,0.92)">자녀처럼 돌봄</text><text x="656" y="242" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="600" font-size="10.5" fill="rgba(255,255,255,0.92)">저희 좋아해 주심</text></g><g class="mnd mnd2"><rect x="501" y="349" width="176" height="112" rx="20" fill="url(#ng2)" filter="url(#mds)"/><rect x="501" y="349" width="176" height="112" rx="20" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"/><text x="589" y="376" text-anchor="middle" font-size="20">😊</text><text x="589" y="398" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="900" font-size="16" fill="white">행복기원</text><text x="589" y="417" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="600" font-size="10.5" fill="rgba(255,255,255,0.92)">늘 건강하시길</text><text x="589" y="433" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="600" font-size="10.5" fill="rgba(255,255,255,0.92)">아프지 마세요</text><text x="589" y="449" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="600" font-size="10.5" fill="rgba(255,255,255,0.92)">아기 잘 낳으세요</text></g><g class="mnd mnd3"><rect x="283" y="349" width="176" height="112" rx="20" fill="url(#ng3)" filter="url(#mds)"/><rect x="283" y="349" width="176" height="112" rx="20" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"/><text x="371" y="376" text-anchor="middle" font-size="20">🫂</text><text x="371" y="398" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="900" font-size="16" fill="white">관계의지</text><text x="371" y="417" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="600" font-size="10.5" fill="rgba(255,255,255,0.92)">2학년도 함께</text><text x="371" y="433" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="600" font-size="10.5" fill="rgba(255,255,255,0.92)">제자로서 자랑</text><text x="371" y="449" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="600" font-size="10.5" fill="rgba(255,255,255,0.92)">만난 건 행운</text></g><g class="mnd mnd4"><rect x="216" y="142" width="176" height="112" rx="20" fill="url(#ng4)" filter="url(#mds)"/><rect x="216" y="142" width="176" height="112" rx="20" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"/><text x="304" y="169" text-anchor="middle" font-size="20">😊</text><text x="304" y="191" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="900" font-size="16" fill="white">긍정변화</text><text x="304" y="210" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="600" font-size="10.5" fill="rgba(255,255,255,0.92)">영어 수업 재미</text><text x="304" y="226" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="600" font-size="10.5" fill="rgba(255,255,255,0.92)">이해도 잘 됨</text><text x="304" y="242" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="600" font-size="10.5" fill="rgba(255,255,255,0.92)">싫은 감정 감소</text></g><g class="mct"><circle cx="480" cy="255" r="84" fill="url(#cg)" filter="url(#mds2)"/><circle cx="480" cy="255" r="84" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="4.5"/><circle cx="480" cy="255" r="73" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/><text x="480" y="237" text-anchor="middle" font-size="30">💝</text><text x="480" y="265" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="900" font-size="19" fill="white">우리</text><text x="480" y="289" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="900" font-size="19" fill="white">선생님께</text></g></svg>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ══ SCENE 8 — DRAWING ANALYSIS ══ -->
+      <sc-if value="{{ isScene10 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:46px 60px;background:linear-gradient(160deg,#FFF6FA,#F7E9F5);overflow:hidden;">
+        <div style="align-self:flex-start;background:#C2185B;color:#fff;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;animation:slideL .6s both;">🎨 #5. 소포 안의 그림 꾸러미</div>
+        <div style="font-size:40px;font-weight:900;color:#2A1622;letter-spacing:-1px;margin-top:12px;animation:fadeUp .6s .1s both;">우리 마음속 선생님 그리기 — 분석</div>
+        <div style="font-size:17px;color:#9B5B73;font-weight:600;margin-top:5px;animation:fadeUp .6s .2s both;">추상적 해석이 필요할 수 있습니다 🖼️</div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:auto;margin-bottom:auto;">
+          <div style="position:relative;background:#fff;border-radius:18px;padding:22px 20px 22px 64px;box-shadow:0 12px 28px rgba(194,24,91,.1);font-size:16px;line-height:1.55;color:#3A2230;font-weight:500;animation:popIn .5s 0.35s both;"><span style="position:absolute;left:18px;top:20px;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#FF6B9D,#C2185B);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;">1</span>대부분의 그림에서 선생님은 <b style="color:#C2185B;">밝은 미소</b>를 짓고 계십니다.</div>
+          <div style="position:relative;background:#fff;border-radius:18px;padding:22px 20px 22px 64px;box-shadow:0 12px 28px rgba(123,31,162,.1);font-size:16px;line-height:1.55;color:#3A2230;font-weight:500;animation:popIn .5s 0.5s both;"><span style="position:absolute;left:18px;top:20px;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#CE93D8,#7B1FA2);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;">2</span>선생님 머리에 <b style="color:#7B1FA2;">왕관</b>을 그려 넣은 그림이 많습니다.</div>
+          <div style="position:relative;background:#fff;border-radius:18px;padding:22px 20px 22px 64px;box-shadow:0 12px 28px rgba(0,188,212,.12);font-size:16px;line-height:1.55;color:#3A2230;font-weight:500;animation:popIn .5s 0.65s both;"><span style="position:absolute;left:18px;top:20px;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4DD0E1,#00A5BC);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;">3</span>사랑과 감사의 상징인 <b style="color:#00A5BC;">하트</b>가 여러 그림에 보입니다.</div>
+          <div style="position:relative;background:#fff;border-radius:18px;padding:22px 20px 22px 64px;box-shadow:0 12px 28px rgba(255,112,67,.12);font-size:16px;line-height:1.55;color:#3A2230;font-weight:500;animation:popIn .5s 0.8s both;"><span style="position:absolute;left:18px;top:20px;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#FFB74D,#FF7043);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;">4</span>배경으로 <b style="color:#FF7043;">교실 환경</b>이 자주 등장하는 점이 특징입니다.</div>
+          <div style="position:relative;background:#fff;border-radius:18px;padding:22px 20px 22px 64px;box-shadow:0 12px 28px rgba(102,187,106,.12);font-size:16px;line-height:1.55;color:#3A2230;font-weight:500;animation:popIn .5s 0.95s both;"><span style="position:absolute;left:18px;top:20px;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#81C784,#43A047);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;">5</span>짧은 <b style="color:#43A047;">단발머리</b>의 선생님 모습이 많이 표현되어 있습니다.</div>
+          <div style="position:relative;background:#fff;border-radius:18px;padding:22px 20px 22px 64px;box-shadow:0 12px 28px rgba(194,24,91,.1);font-size:16px;line-height:1.55;color:#3A2230;font-weight:500;animation:popIn .5s 1.1s both;"><span style="position:absolute;left:18px;top:20px;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#F06292,#C2185B);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;">6</span>대체로 <b style="color:#C2185B;">긍정적인 메시지</b>가 글귀로 함께 나타납니다.</div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ══ SCENE 11 — GALLERY 1 ══ -->
+
+
+      <!-- ══ GALLERY ══ -->
+      <!-- GALLERY 11 -->
+      <sc-if value="{{ isScene11 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:46px 60px 64px;background:linear-gradient(160deg,#FFF6FA,#FBEAF6);overflow:hidden;">
+        <div style="align-self:flex-start;background:#7B1FA2;color:#fff;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;animation:slideL .6s both;">🖼️ #5. 그리기 갤러리 ①</div>
+        <div style="font-size:40px;font-weight:900;color:#2A1622;letter-spacing:-1px;margin-top:12px;animation:fadeUp .6s .1s both;">우리가 그린 선생님</div>
+        <div style="font-size:17px;color:#9B5B73;font-weight:600;margin-top:5px;animation:fadeUp .6s .2s both;">익명으로 전시된 작품 ① · 학생 1~5</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:minmax(0,1fr);gap:14px;flex:1;min-height:0;margin-top:20px;">
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.3s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-01.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 1</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.4s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-02.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 2</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.5s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-03.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 3</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.6s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-04.png" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 4</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.7s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-05.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 5</div></div>
+        </div>
+      </div>
+      </sc-if>
+      <!-- GALLERY 12 -->
+      <sc-if value="{{ isScene12 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:46px 60px 64px;background:linear-gradient(160deg,#FFF6FA,#FBEAF6);overflow:hidden;">
+        <div style="align-self:flex-start;background:#7B1FA2;color:#fff;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;animation:slideL .6s both;">🖼️ #5. 그리기 갤러리 ②</div>
+        <div style="font-size:40px;font-weight:900;color:#2A1622;letter-spacing:-1px;margin-top:12px;animation:fadeUp .6s .1s both;">우리가 그린 선생님</div>
+        <div style="font-size:17px;color:#9B5B73;font-weight:600;margin-top:5px;animation:fadeUp .6s .2s both;">익명으로 전시된 작품 ② · 학생 6~10</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:minmax(0,1fr);gap:14px;flex:1;min-height:0;margin-top:20px;">
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.3s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-06.png" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 6</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.4s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-07.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 7</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.5s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-08.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 8</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.6s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-09.png" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 9</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.7s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-10.png" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 10</div></div>
+        </div>
+      </div>
+      </sc-if>
+      <!-- GALLERY 13 -->
+      <sc-if value="{{ isScene13 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:46px 60px 64px;background:linear-gradient(160deg,#FFF6FA,#FBEAF6);overflow:hidden;">
+        <div style="align-self:flex-start;background:#7B1FA2;color:#fff;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;animation:slideL .6s both;">🖼️ #5. 그리기 갤러리 ③</div>
+        <div style="font-size:40px;font-weight:900;color:#2A1622;letter-spacing:-1px;margin-top:12px;animation:fadeUp .6s .1s both;">우리가 그린 선생님</div>
+        <div style="font-size:17px;color:#9B5B73;font-weight:600;margin-top:5px;animation:fadeUp .6s .2s both;">익명으로 전시된 작품 ③ · 학생 11~15</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:minmax(0,1fr);gap:14px;flex:1;min-height:0;margin-top:20px;">
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.3s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-11.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 11</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.4s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-12.png" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 12</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.5s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-13.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 13</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.6s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-14.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 14</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.7s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-15.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 15</div></div>
+        </div>
+      </div>
+      </sc-if>
+      <!-- GALLERY 14 -->
+      <sc-if value="{{ isScene14 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:46px 60px 64px;background:linear-gradient(160deg,#FFF6FA,#FBEAF6);overflow:hidden;">
+        <div style="align-self:flex-start;background:#7B1FA2;color:#fff;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;animation:slideL .6s both;">🖼️ #5. 그리기 갤러리 ④</div>
+        <div style="font-size:40px;font-weight:900;color:#2A1622;letter-spacing:-1px;margin-top:12px;animation:fadeUp .6s .1s both;">우리가 그린 선생님</div>
+        <div style="font-size:17px;color:#9B5B73;font-weight:600;margin-top:5px;animation:fadeUp .6s .2s both;">익명으로 전시된 작품 ④ · 학생 16~19</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:minmax(0,1fr);gap:14px;flex:1;min-height:0;margin-top:20px;">
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.3s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-16.png" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 16</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.4s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-17.png" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 17</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.5s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-18.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 18</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.6s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-19.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 19</div></div>
+        </div>
+      </div>
+      </sc-if>
+      <!-- GALLERY 15 -->
+      <sc-if value="{{ isScene15 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:46px 60px 64px;background:linear-gradient(160deg,#FFF6FA,#FBEAF6);overflow:hidden;">
+        <div style="align-self:flex-start;background:#7B1FA2;color:#fff;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;animation:slideL .6s both;">🖼️ #5. 그리기 갤러리 ⑤</div>
+        <div style="font-size:40px;font-weight:900;color:#2A1622;letter-spacing:-1px;margin-top:12px;animation:fadeUp .6s .1s both;">우리가 그린 선생님</div>
+        <div style="font-size:17px;color:#9B5B73;font-weight:600;margin-top:5px;animation:fadeUp .6s .2s both;">익명으로 전시된 작품 ⑤ · 학생 20~23</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:minmax(0,1fr);gap:14px;flex:1;min-height:0;margin-top:20px;">
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.3s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-20.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 20</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.4s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-21.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 21</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.5s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-22.png" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 22</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(123,31,162,.14);display:flex;flex-direction:column;min-height:0;animation:flipIn .5s 0.6s both;"><div style="flex:1;min-height:0;overflow:hidden;"><img src="images/1-4/student-23.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" alt="학생 작품"></div><div style="flex-shrink:0;font-size:12px;font-weight:700;color:#9B5B73;text-align:center;padding:6px;background:#fff;">학생 23</div></div>
+        </div>
+      </div>
+      </sc-if>
+
+            <!-- ══ SCENE 15 — EPILOGUE ══ -->
+      <sc-if value="{{ isScene16 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:46px 60px;background:linear-gradient(160deg,#FFF1F6,#F3E5F8);overflow:hidden;">
+        <div style="align-self:flex-start;background:#43A047;color:#fff;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;animation:slideL .6s both;">✅ #6. 배송 완료</div>
+        <div style="font-size:40px;font-weight:900;color:#2A1622;letter-spacing:-1px;margin-top:12px;animation:fadeUp .6s .1s both;">에필로그 — 선생님의 답장을 기다리며</div>
+        <div style="font-size:17px;color:#9B5B73;font-weight:600;margin-top:5px;animation:fadeUp .6s .2s both;">수령 확인 후 따뜻한 한마디를 남겨주세요 💝</div>
+
+        <div style="display:flex;gap:26px;margin-top:24px;flex:1;min-height:0;">
+          <div style="flex:1;background:linear-gradient(160deg,#C2185B,#7B1FA2);border-radius:22px;padding:34px 32px;color:#fff;display:flex;flex-direction:column;justify-content:center;box-shadow:0 18px 42px rgba(123,31,162,.3);animation:slideL .6s .35s both;">
+            <div style="font-size:30px;font-weight:900;">✅ 배송이 완료되었습니다</div>
+            <div style="font-size:17px;line-height:1.85;margin-top:18px;opacity:.95;">학생들의 마음이 무사히 도착했습니다.<br>1학년 4반이 최정아 선생님을 위해<br>정성껏 준비한 마음 소포입니다.</div>
+            <div style="font-size:15px;margin-top:24px;background:rgba(255,255,255,.16);border-radius:12px;padding:14px 18px;">📦 한 달 늦었지만, 마음의 유통기한은 영원합니다 💗</div>
+          </div>
+
+          <div style="flex:1.05;position:relative;background:repeating-linear-gradient(#FFFCF8,#FFFCF8 37px,#F4D9E4 38px);border-radius:18px;padding:34px 34px;box-shadow:0 18px 42px rgba(194,24,91,.18);border:1px solid #F0D5E0;animation:slideR .6s .5s both;overflow-y:auto;overflow-x:hidden;">
+            <div style="position:absolute;top:-14px;right:24px;background:#FF7043;color:#fff;font-weight:900;font-size:13px;padding:8px 16px;border-radius:8px;transform:rotate(-12deg);box-shadow:0 8px 18px rgba(255,112,67,.4);animation:stamp .6s 1s both;">✅ 수령확인<br>2026.06.15</div>
+            <div style="font-family:'Gaegu',cursive;font-size:25px;font-weight:700;color:#C2185B;">To. 사랑하는 우리 1-4반 친구들 ♡</div>
+
+            <sc-if value="{{ editing }}">
+              <textarea ref="{{ replyRef }}" defaultValue="{{ replyText }}" placeholder="학생들에게 전하고 싶은 따뜻한 한마디를 적어주세요 ✍️" style="width:100%;height:142px;margin-top:14px;border:2px solid #F4B9D0;border-radius:12px;padding:13px 15px;font-family:'Gaegu',cursive;font-size:19px;line-height:1.55;color:#3A2230;resize:none;outline:none;background:rgba(255,255,255,.78);box-sizing:border-box;"></textarea>
+              <div style="display:flex;gap:10px;margin-top:12px;justify-content:flex-end;">
+                <div onClick="{{ cancelEdit }}" style="cursor:pointer;padding:9px 18px;border-radius:10px;background:#F0E2EA;color:#9B5B73;font-weight:800;font-size:14px;font-family:'Noto Sans KR',sans-serif;">취소</div>
+                <div onClick="{{ saveReply }}" style="cursor:pointer;padding:9px 20px;border-radius:10px;background:linear-gradient(135deg,#C2185B,#7B1FA2);color:#fff;font-weight:800;font-size:14px;font-family:'Noto Sans KR',sans-serif;box-shadow:0 6px 16px rgba(194,24,91,.35);">{{ saveLabel }}</div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ notEditing }}">
+              <sc-if value="{{ hasReply }}">
+                <div style="font-family:'Gaegu',cursive;font-size:21px;line-height:1.7;color:#3A2230;margin-top:16px;white-space:pre-wrap;">{{ replyText }}</div>
+              </sc-if>
+              <sc-if value="{{ noReply }}">
+                <div style="font-family:'Gaegu',cursive;font-size:20px;line-height:1.78;color:#AC8B9C;margin-top:16px;">아직 선생님의 답장이 도착하지 않았어요.<br>아래 버튼을 눌러 따뜻한 한마디를 남겨주세요 ✍️</div>
+              </sc-if>
+              <div style="font-family:'Gaegu',cursive;font-size:22px;font-weight:700;color:#7B1FA2;text-align:right;margin-top:18px;">From. 최정아 선생님 💛</div>
+              <div style="display:flex;align-items:center;gap:12px;margin-top:14px;">
+                <div onClick="{{ startEdit }}" style="cursor:pointer;padding:10px 20px;border-radius:10px;background:linear-gradient(135deg,#C2185B,#7B1FA2);color:#fff;font-weight:800;font-size:14px;font-family:'Noto Sans KR',sans-serif;box-shadow:0 6px 16px rgba(194,24,91,.35);">✍️ {{ editBtnLabel }}</div>
+                <div style="font-size:12px;font-weight:700;color:#9B5B73;font-family:'Noto Sans KR',sans-serif;">{{ statusLabel }}</div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- SCENE 12 CCL -->
+      <sc-if value="{{ isScene17 }}">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:46px 60px;background:linear-gradient(160deg,#FFF6FA,#F1E4F8);overflow:hidden;">
+        <div style="align-self:flex-start;background:#7B1FA2;color:#fff;font-weight:800;font-size:17px;padding:8px 18px;border-radius:999px;animation:slideL .6s both;">🖋️ #7. CCL 저작권 라이선스</div>
+        <div style="font-size:40px;font-weight:900;color:#2A1622;letter-spacing:-1px;margin-top:12px;animation:fadeUp .6s .1s both;">우리 작품을 위한 저작권 라이선스</div>
+        <div style="font-size:17px;color:#9B5B73;font-weight:600;margin-top:5px;animation:fadeUp .6s .2s both;">학생들이 직접 선택한 CCL · 출처 : 장평중학교 1-4반 (2026)</div>
+
+        <div style="display:flex;gap:24px;margin-top:22px;flex:1;">
+          <div style="flex:1.3;background:#fff;border-radius:20px;padding:26px 30px;box-shadow:0 14px 34px rgba(123,31,162,.14);display:flex;flex-direction:column;animation:fadeUp .6s .35s both;">
+            <div style="font-size:17px;font-weight:900;color:#C2185B;margin-bottom:20px;">📊 학생별 CCL 선택 현황<span style="color:#9B5B73;font-weight:600;font-size:14px;">(총 24명)</span></div>
+            <div style="display:flex;flex-direction:column;gap:16px;flex:1;justify-content:center;">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#3A2230;margin-bottom:5px;"><span>저작자 표시 + 비영리 + 변경금지</span><span style="color:#FF4500;">17명 · 71%</span></div>
+                <div style="height:22px;background:#F3E4EC;border-radius:11px;overflow:hidden;"><div style="height:100%;width:71%;--bw:71%;background:linear-gradient(90deg,#FF4500,#FF7043);border-radius:11px;animation:barGrow 1s 0.5s both;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#3A2230;margin-bottom:5px;"><span>저작자 표시 + 비영리 + 동일조건변경허락</span><span style="color:#FF1493;">3명 · 12%</span></div>
+                <div style="height:22px;background:#F3E4EC;border-radius:11px;overflow:hidden;"><div style="height:100%;width:12%;--bw:12%;background:linear-gradient(90deg,#FF1493,#FF6B9D);border-radius:11px;animation:barGrow 1s 0.65s both;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#3A2230;margin-bottom:5px;"><span>저작자 표시 + 비영리</span><span style="color:#7B1FA2;">2명 · 8%</span></div>
+                <div style="height:22px;background:#F3E4EC;border-radius:11px;overflow:hidden;"><div style="height:100%;width:8%;--bw:8%;background:linear-gradient(90deg,#7B1FA2,#AB47BC);border-radius:11px;animation:barGrow 1s 0.8s both;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#3A2230;margin-bottom:5px;"><span>저작자 표시 + 동일조건변경허락</span><span style="color:#0288D1;">1명 · 4%</span></div>
+                <div style="height:22px;background:#F3E4EC;border-radius:11px;overflow:hidden;"><div style="height:100%;width:4%;--bw:4%;background:linear-gradient(90deg,#0288D1,#00BCD4);border-radius:11px;animation:barGrow 1s 0.95s both;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#3A2230;margin-bottom:5px;"><span>저작자 표시</span><span style="color:#2E7D32;">1명 · 4%</span></div>
+                <div style="height:22px;background:#F3E4EC;border-radius:11px;overflow:hidden;"><div style="height:100%;width:4%;--bw:4%;background:linear-gradient(90deg,#2E7D32,#66BB6A);border-radius:11px;animation:barGrow 1s 1.1s both;"></div></div>
+              </div>
+                        </div>
+          </div>
+
+          <div style="flex:1;display:flex;flex-direction:column;gap:18px;">
+            <div style="background:linear-gradient(135deg,#7B1FA2,#C2185B);border-radius:20px;padding:24px 26px;color:#fff;box-shadow:0 14px 34px rgba(123,31,162,.28);animation:slideR .6s .5s both;">
+              <div style="font-size:15px;font-weight:900;opacity:.92;">🤖 AI 저작권 성향 분석</div>
+              <div style="font-size:14.5px;line-height:1.7;margin-top:10px;font-weight:500;"> 이 학급 학생들은 마치 '내 작품은 소중하니까, 돈 받고 쓸 거면 용서 못 해!'를 외치는 저작권계의 '짠내 나는' MZ세대 같네요.</div>
+            </div>
+            <div style="flex:1;background:#fff;border-radius:20px;padding:22px 26px;box-shadow:0 14px 34px rgba(194,24,91,.12);display:flex;flex-direction:column;justify-content:center;gap:10px;animation:fadeUp .6s .7s both;">
+              <div style="font-size:14px;font-weight:800;color:#7B1FA2;margin-bottom:2px;">적용된 라이선스</div>
+              <div style="display:flex;flex-wrap:wrap;gap:7px;">
+                <span style="background:#F3E4F8;color:#7B1FA2;font-weight:700;font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid #E1C9ED;">저작자 표시 + 비영리 + 변경금지</span>
+                <span style="background:#F3E4F8;color:#7B1FA2;font-weight:700;font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid #E1C9ED;">저작자 표시 + 비영리 + 동일조건변경허락</span>
+                <span style="background:#F3E4F8;color:#7B1FA2;font-weight:700;font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid #E1C9ED;">저작자 표시 + 비영리</span>
+                <span style="background:#F3E4F8;color:#7B1FA2;font-weight:700;font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid #E1C9ED;">저작자 표시 + 동일조건변경허락</span>
+                <span style="background:#F3E4F8;color:#7B1FA2;font-weight:700;font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid #E1C9ED;">저작자 표시</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- CONTROLS -->
+      <div style="position:absolute;left:0;right:0;bottom:0;height:54px;display:flex;align-items:center;gap:16px;padding:0 22px;background:linear-gradient(0deg,rgba(42,22,34,.55),rgba(42,22,34,0));z-index:50;">
+        <div onClick="{{ prev }}" style="cursor:pointer;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-size:14px;color:#C2185B;font-weight:900;box-shadow:0 4px 12px rgba(0,0,0,.2);">‹</div>
+        <div onClick="{{ toggle }}" style="cursor:pointer;width:40px;height:40px;border-radius:50%;background:#C2185B;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;font-weight:900;box-shadow:0 4px 14px rgba(194,24,91,.5);">{{ playLabel }}</div>
+        <div onClick="{{ next }}" style="cursor:pointer;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-size:14px;color:#C2185B;font-weight:900;box-shadow:0 4px 12px rgba(0,0,0,.2);">›</div>
+        <div style="flex:1;height:7px;background:rgba(255,255,255,.4);border-radius:4px;overflow:hidden;"><div ref="{{ progressRef }}" style="height:100%;width:0%;background:{{ accent }};border-radius:4px;"></div></div>
+        <div style="color:#fff;font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;text-shadow:0 1px 3px rgba(0,0,0,.4);min-width:62px;text-align:right;">{{ counter }}</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:720},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#FF6B9D&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;speed&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:1,&quot;min&quot;:0.5,&quot;max&quot;:2,&quot;step&quot;:0.1,&quot;tsType&quot;:&quot;number&quot;},&quot;loop&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { i: 0, playing: true, scale: 1, reply: '', editing: false, saving: false };
+  durs = [9, 9, 12, 12, 12, 14, 11, 13, 14, 12, 11, 11, 11, 11, 11, 11, 16, 13];
+  elapsed = 0;
+  progressRef = React.createRef();
+  replyRef = React.createRef();
+
+  componentDidMount() {
+    try {
+      const s = JSON.parse(localStorage.getItem('maeumsopo_pos') || 'null');
+      if (s && typeof s.i === 'number') {
+        this.setState({ i: Math.min(Math.max(s.i, 0), this.durs.length - 1) });
+      }
+    } catch (e) {}
+    this.fit();
+    window.addEventListener('resize', this.fit);
+    this.last = performance.now();
+    this.raf = requestAnimationFrame(this.loop);
+    this.loadReply();
+  }
+
+  loadReply = (attempt) => {
+    attempt = attempt || 0;
+    if (window.ReplyStore && window.ReplyStore.load) {
+      window.ReplyStore.load()
+        .then((d) => { if (d && d.reply_text) this.setState({ reply: d.reply_text }); })
+        .catch(() => {});
+      return;
+    }
+    if (attempt < 15) setTimeout(() => this.loadReply(attempt + 1), 200);
+  };
+
+  startEdit = () => this.setState({ editing: true, playing: false });
+  cancelEdit = () => this.setState({ editing: false });
+
+  saveReply = () => {
+    const el = this.replyRef.current;
+    const text = el ? el.value.trim() : '';
+    this.setState({ saving: true });
+    const done = () => this.setState({ reply: text, editing: false, saving: false });
+    if (window.ReplyStore && window.ReplyStore.save) {
+      window.ReplyStore.save(text).then(done).catch((e) => { console.warn('저장 실패', e); done(); });
+    } else {
+      done();
+    }
+  };
+
+  componentWillUnmount() {
+    cancelAnimationFrame(this.raf);
+    window.removeEventListener('resize', this.fit);
+  }
+
+  fit = () => {
+    const s = Math.min((window.innerWidth - 24) / 1280, (window.innerHeight - 24) / 720);
+    this.setState({ scale: Math.max(0.2, s) });
+  };
+
+  loop = (ts) => {
+    const dt = ts - this.last;
+    this.last = ts;
+    if (this.state.playing) {
+      const speed = this.props.speed ?? 1;
+      this.elapsed += dt * speed;
+      const dur = this.durs[this.state.i] * 1000;
+      if (this.elapsed >= dur) {
+        this.advance();
+      } else {
+        this.updateBar();
+      }
+    }
+    this.raf = requestAnimationFrame(this.loop);
+  };
+
+  updateBar = () => {
+    const dur = this.durs[this.state.i] * 1000;
+    const pct = Math.min(100, (this.elapsed / dur) * 100);
+    if (this.progressRef.current) this.progressRef.current.style.width = pct.toFixed(2) + '%';
+  };
+
+  advance = () => {
+    const last = this.durs.length - 1;
+    if (this.state.i >= last) {
+      if (this.props.loop) {
+        this.go(0);
+      } else {
+        this.elapsed = this.durs[last] * 1000;
+        if (this.progressRef.current) this.progressRef.current.style.width = '100%';
+        this.setState({ playing: false });
+      }
+    } else {
+      this.go(this.state.i + 1);
+    }
+  };
+
+  go = (n) => {
+    const i = Math.min(Math.max(n, 0), this.durs.length - 1);
+    this.elapsed = 0;
+    this.last = performance.now();
+    if (this.progressRef.current) this.progressRef.current.style.width = '0%';
+    this.setState({ i, playing: true });
+    try { localStorage.setItem('maeumsopo_pos', JSON.stringify({ i })); } catch (e) {}
+  };
+
+  toggle = () => {
+    const last = this.durs.length - 1;
+    if (!this.state.playing && this.state.i === last && this.elapsed >= this.durs[last] * 1000 - 60) {
+      this.elapsed = 0;
+      this.last = performance.now();
+      if (this.progressRef.current) this.progressRef.current.style.width = '0%';
+      try { localStorage.setItem('maeumsopo_pos', JSON.stringify({ i: 0 })); } catch (e) {}
+      this.setState({ playing: true, i: 0 });
+      return;
+    }
+    this.last = performance.now();
+    this.setState((s) => ({ playing: !s.playing }));
+  };
+
+  next = () => this.go(this.state.i + 1);
+  prev = () => this.go(this.state.i - 1);
+
+  renderVals() {
+    const { i, playing, scale } = this.state;
+    const v = {};
+    for (let k = 0; k < this.durs.length; k++) v['isScene' + k] = (k === i);
+    v.stageTransform = 'scale(' + scale + ')';
+    v.progressRef = this.progressRef;
+    v.accent = this.props.accent ?? '#FF6B9D';
+    v.counter = String(i + 1).padStart(2, '0') + ' / ' + this.durs.length;
+    v.playLabel = playing ? '❚❚' : '▶';
+    v.toggle = this.toggle;
+    v.next = this.next;
+    v.prev = this.prev;
+
+    const reply = this.state.reply || '';
+    const backend = (window.ReplyStore && window.ReplyStore.backend) || 'local';
+    v.editing = this.state.editing;
+    v.notEditing = !this.state.editing;
+    v.hasReply = reply.length > 0;
+    v.noReply = reply.length === 0;
+    v.replyText = reply;
+    v.replyRef = this.replyRef;
+    v.saveLabel = this.state.saving ? '저장중...' : '저장 하기';
+    v.editBtnLabel = reply.length > 0 ? '답장 수정하기' : '답장 작성하기';
+    v.statusLabel = reply.length > 0 ? (backend === 'local' ? '💾 기기에 저장됨' : '☁️ 서버에 저장됨') : '';
+    v.startEdit = this.startEdit;
+    v.cancelEdit = this.cancelEdit;
+    v.saveReply = this.saveReply;
+    return v;
+  }
+}
+</script>
+</body>
+</html>
+

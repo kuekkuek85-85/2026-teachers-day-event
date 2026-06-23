@@ -28,14 +28,18 @@ JSON만 출력: {"bullets":["...","..."]}"""
 def regen(cls):
     imgs=sorted(glob.glob(f'docs/images/{cls}/student-*.*'))
     if not imgs: print(cls,'no images'); return
-    parts=[PROMPT]+[types.Part.from_bytes(data=thumb(p), mime_type='image/jpeg') for p in imgs]
+    thumbs=[]
+    for p in imgs:
+        try: thumbs.append(thumb(p))
+        except Exception as e: print(f'    [skip] {os.path.basename(p)}: {e}')
+    parts=[PROMPT]+[types.Part.from_bytes(data=t, mime_type='image/jpeg') for t in thumbs]
     txt=client.models.generate_content(model="gemini-2.5-flash", contents=parts).text.strip()
     data=json.loads(re.search(r'\{.*\}', txt, re.DOTALL).group())
     bullets=[b.strip() for b in data['bullets'] if b.strip()][:6]
     p=f'analysis/{cls}_analysis.json'
     a=json.load(open(p,encoding='utf-8')); a['drawing_bullets']=bullets
     json.dump(a, open(p,'w',encoding='utf-8'), ensure_ascii=False, indent=2)
-    print(f'{cls} ({len(imgs)}장) -> {len(bullets)}개')
+    print(f'{cls} ({len(thumbs)}/{len(imgs)}장) -> {len(bullets)}개')
     for b in bullets: print('    -',b)
 
 if __name__=='__main__':
